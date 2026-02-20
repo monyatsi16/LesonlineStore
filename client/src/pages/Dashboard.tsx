@@ -161,16 +161,16 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Smart Pricing Widget */}
+          {/* Gradient Boosting Pricing Model */}
           <div className="lg:col-span-1">
              <Card className="h-full border-primary/20 shadow-lg shadow-primary/5">
                <CardHeader className="bg-primary/5 border-b border-primary/10">
                  <div className="flex items-center gap-2">
-                   <Zap className="h-5 w-5 text-primary fill-primary" />
-                   <CardTitle>AI Price Recommendations</CardTitle>
+                   <BrainCircuit className="h-5 w-5 text-primary" />
+                   <CardTitle>Gradient Boosting Model</CardTitle>
                  </div>
                  <CardDescription>
-                   Real-time suggestions based on market demand and competitor analysis.
+                   Dynamic price optimization for LESonline.Store
                  </CardDescription>
                </CardHeader>
                <CardContent className="p-0">

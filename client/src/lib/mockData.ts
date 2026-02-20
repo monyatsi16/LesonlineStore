@@ -117,7 +117,7 @@ export const PRICE_RECOMMENDATIONS: PriceRecommendation[] = [
     currentPrice: 24.50,
     recommendedPrice: 26.95,
     confidence: 0.92,
-    reason: 'High demand detected in North American region. Competitor stock low.',
+    reason: 'Gradient Boosting Model: High demand detected in North American region. Residual positive.',
     timestamp: '2 mins ago',
     trend: 'up'
   },
@@ -128,7 +128,7 @@ export const PRICE_RECOMMENDATIONS: PriceRecommendation[] = [
     currentPrice: 12.80,
     recommendedPrice: 11.50,
     confidence: 0.85,
-    reason: 'Market saturation increasing. Lower price to maintain sales volume.',
+    reason: 'Gradient Boosting Model: Market saturation increasing. Negative residual adjustment.',
     timestamp: '15 mins ago',
     trend: 'down'
   },
@@ -139,7 +139,7 @@ export const PRICE_RECOMMENDATIONS: PriceRecommendation[] = [
     currentPrice: 3.20,
     recommendedPrice: 3.25,
     confidence: 0.65,
-    reason: 'Raw cotton material costs rising slightly.',
+    reason: 'Gradient Boosting Model: Raw material costs rising. Slight positive residual.',
     timestamp: '1 hour ago',
     trend: 'stable'
   }

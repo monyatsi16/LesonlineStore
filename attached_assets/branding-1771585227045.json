@@ -1,0 +1,145 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Questrial",
+      "role": "body"
+    },
+    {
+      "family": "Archivo",
+      "role": "heading"
+    }
+  ],
+  "colors": {
+    "primary": "#0E1F6C",
+    "accent": "#0E1F6C",
+    "background": "#FAFAFA",
+    "textPrimary": "#000000",
+    "link": "#0E1F6C"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Questrial",
+      "heading": "Archivo"
+    },
+    "fontStacks": {
+      "heading": [
+        "Archivo",
+        "sans-serif"
+      ],
+      "body": [
+        "Questrial",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Archivo",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "44px",
+      "h2": "26.4px",
+      "body": "19.8px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "0px"
+  },
+  "components": {
+    "input": {
+      "background": "#000000",
+      "textColor": "#FAFAFA",
+      "borderColor": null,
+      "borderRadius": "26px",
+      "borderRadiusCorners": {
+        "topLeft": "26px",
+        "topRight": "26px",
+        "bottomRight": "26px",
+        "bottomLeft": "26px"
+      },
+      "shadow": "none"
+    },
+    "buttonPrimary": {
+      "background": "#0E1F6C",
+      "textColor": "#FFFFFF",
+      "borderRadius": "43px",
+      "borderRadiusCorners": {
+        "topLeft": "43px",
+        "topRight": "43px",
+        "bottomRight": "43px",
+        "bottomLeft": "43px"
+      },
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#FAFAFA",
+      "textColor": "#3F3F3F",
+      "borderColor": "#E6E6E6",
+      "borderRadius": "0px",
+      "borderRadiusCorners": {
+        "topLeft": "0px",
+        "topRight": "0px",
+        "bottomRight": "0px",
+        "bottomLeft": "0px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.png",
+    "favicon": "File saved at: attached_assets/favicon.png",
+    "ogImage": "http://lesonline.store/cdn/shop/files/2_c51a7c63-4bbd-473b-825b-ec3db05ff44b.png?v=1682869556",
+    "logoHref": "File saved at: attached_assets/logoHref.html",
+    "logoAlt": "LESonline"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Selected #0 because it is visible, located in the header, has a medium size, and the alt text matches the brand name 'LESonline'.",
+    "confidence": 0.95,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 2,
+      "text": "View all",
+      "reasoning": "Button #2 ('View all') is likely the primary CTA due to its action-oriented text and vibrant brand color (#0E1F6C), which is consistent with the site's primary color."
+    },
+    "secondary": {
+      "index": 3,
+      "text": "1\n           / \n          of\n          5",
+      "reasoning": "Button #3 ('1 / of 5') is selected as secondary because it has a different background color (#FAFAFA) and serves a navigational purpose, making it less prominent than the primary CTA."
+    },
+    "confidence": 0.9
+  },
+  "personality": {
+    "tone": "modern",
+    "energy": "medium",
+    "targetAudience": "online shoppers"
+  },
+  "designSystem": {
+    "framework": "custom",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.9,
+    "colors": 0.95,
+    "overall": 0.925
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": 0,
+        "selectedLogoReasoning": "Selected #0 because it is visible, located in the header, has a medium size, and the alt text matches the brand name 'LESonline'.",
+        "confidence": 0.95
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}
