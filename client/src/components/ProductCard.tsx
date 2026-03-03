@@ -1,9 +1,9 @@
-import { Product } from "@/lib/mockData";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { Link } from "wouter";
+import type { Product } from "@shared/schema";
 
 interface ProductCardProps {
   product: Product;
@@ -12,7 +12,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="group h-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-border/60">
+      <Card className="group h-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-border/60" data-testid={`card-product-${product.id}`}>
         <div className="relative aspect-square overflow-hidden bg-white">
           <img
             src={product.image}
@@ -38,7 +38,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </h3>
           
           <div className="mb-2">
-            <span className="text-lg font-bold text-foreground">
+            <span className="text-lg font-bold text-foreground" data-testid={`text-price-${product.id}`}>
               M{product.price.toFixed(2)}
             </span>
             <span className="text-xs text-muted-foreground ml-1">/ piece</span>
@@ -50,7 +50,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </CardContent>
         
         <CardFooter className="p-4 pt-0">
-          <Button variant="outline" className="w-full text-xs h-8">
+          <Button variant="outline" className="w-full text-xs h-8" data-testid={`button-contact-${product.id}`}>
             Contact Supplier
           </Button>
         </CardFooter>

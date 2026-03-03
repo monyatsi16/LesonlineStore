@@ -1,39 +1,65 @@
 import { Navbar } from "@/components/Navbar";
-import { PRODUCTS, PRICE_RECOMMENDATIONS, SALES_DATA } from "@/lib/mockData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUp, ArrowDown, Minus, RefreshCw, Zap, TrendingUp, DollarSign, Package } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { useState, useEffect } from "react";
+import { ArrowUp, ArrowDown, Minus, RefreshCw, Zap, TrendingUp, DollarSign, Package, BrainCircuit } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { Product, PriceRecommendation, SalesData } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const [recommendations, setRecommendations] = useState(PRICE_RECOMMENDATIONS);
+  const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleApplyPrice = (id: string, newPrice: number) => {
-    toast({
-      title: "Price Updated Successfully",
-      description: `Product price updated to M${newPrice.toFixed(2)} via LESonline API.`,
-    });
-    // Remove from list to simulate applied
-    setRecommendations(prev => prev.filter(r => r.id !== id));
-  };
+  const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+  const { data: recommendations = [] } = useQuery<PriceRecommendation[]>({ queryKey: ["/api/recommendations"] });
+  const { data: salesData = [] } = useQuery<SalesData[]>({ queryKey: ["/api/sales"] });
+
+  const runModelMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/pricing/run-model");
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Gradient Boosting Model Complete",
+        description: `Generated ${data.generated} new price recommendations.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+    },
+  });
+
+  const applyPriceMutation = useMutation({
+    mutationFn: async ({ recId, productId, price }: { recId: number; productId: number; price: number }) => {
+      await apiRequest("POST", `/api/recommendations/${recId}/apply`, { productId, price });
+    },
+    onSuccess: (_data, variables) => {
+      toast({
+        title: "Price Updated Successfully",
+        description: `Product price updated to M${variables.price.toFixed(2)} via LESonline API.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    },
+  });
 
   const refreshData = () => {
     setIsRefreshing(true);
-    // Simulate API fetch
+    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
     setTimeout(() => {
       setIsRefreshing(false);
-      toast({
-        title: "Data Refreshed",
-        description: "Latest market insights retrieved from backend.",
-      });
+      toast({ title: "Data Refreshed", description: "Latest market insights retrieved from backend." });
     }, 1500);
   };
+
+  const totalRevenue = salesData.reduce((sum, s) => sum + s.revenue, 0);
+  const totalOrders = salesData.reduce((sum, s) => sum + s.orders, 0);
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans">
@@ -42,22 +68,21 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground">Retailer Dashboard</h1>
+            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-dashboard-title">Retailer Dashboard</h1>
             <p className="text-muted-foreground">Overview of your store performance and pricing insights.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={refreshData} disabled={isRefreshing} className="gap-2">
+            <Button variant="outline" onClick={refreshData} disabled={isRefreshing} className="gap-2" data-testid="button-refresh">
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Syncing...' : 'Refresh Data'}
             </Button>
-            <Button className="gap-2 bg-primary hover:bg-primary/90">
-              <Zap className="h-4 w-4" />
-              Auto-Optimize All
+            <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={() => runModelMutation.mutate()} disabled={runModelMutation.isPending} data-testid="button-run-model">
+              <BrainCircuit className="h-4 w-4" />
+              {runModelMutation.isPending ? 'Running Model...' : 'Run Gradient Boosting'}
             </Button>
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -65,7 +90,7 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">M45,231.89</div>
+              <div className="text-2xl font-bold" data-testid="text-total-revenue">M{totalRevenue.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">+20.1% from last month</p>
             </CardContent>
           </Card>
@@ -75,43 +100,42 @@ export default function Dashboard() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+2350</div>
-              <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+              <div className="text-2xl font-bold" data-testid="text-total-orders">+{totalOrders}</div>
+              <p className="text-xs text-muted-foreground">+18% from last month</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sales</CardTitle>
+              <CardTitle className="text-sm font-medium">Products</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12,234</div>
-              <p className="text-xs text-muted-foreground">+19% from last month</p>
+              <div className="text-2xl font-bold" data-testid="text-product-count">{products.length}</div>
+              <p className="text-xs text-muted-foreground">In catalog</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Competitor Alert</CardTitle>
+              <CardTitle className="text-sm font-medium">Model Alerts</CardTitle>
               <Zap className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3 Alerts</div>
-              <p className="text-xs text-muted-foreground">Price changes detected</p>
+              <div className="text-2xl font-bold" data-testid="text-alert-count">{recommendations.length} Alerts</div>
+              <p className="text-xs text-muted-foreground">Price changes recommended</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Chart Section */}
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Sales Analytics</CardTitle>
-                <CardDescription>Revenue and Order volume trends.</CardDescription>
+                <CardTitle>Sales Analytics (LSL)</CardTitle>
+                <CardDescription>Revenue trends from the database.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={SALES_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
@@ -119,7 +143,7 @@ export default function Dashboard() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `M${value}`} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
@@ -137,21 +161,21 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                  <div className="space-y-4">
-                  {PRODUCTS.slice(0, 3).map(product => (
-                    <div key={product.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                  {products.slice(0, 4).map(product => (
+                    <div key={product.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0" data-testid={`row-inventory-${product.id}`}>
                       <div className="flex items-center gap-4">
                         <div className="h-12 w-12 rounded bg-slate-100 p-1 border">
                            <img src={product.image} alt="" className="h-full w-full object-contain" />
                         </div>
                         <div>
                           <p className="font-medium text-sm">{product.name}</p>
-                          <p className="text-xs text-muted-foreground">SKU: {product.id}00{product.id}</p>
+                          <p className="text-xs text-muted-foreground">ID: {product.id}</p>
                         </div>
                       </div>
                       <div className="text-right">
                          <div className="font-bold">{product.stock} units</div>
-                         <div className={`text-xs ${product.stock < 100 ? 'text-red-500' : 'text-green-500'}`}>
-                           {product.stock < 100 ? 'Low Stock' : 'In Stock'}
+                         <div className={`text-xs ${product.stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                           {product.stock < 10 ? 'Low Stock' : 'In Stock'}
                          </div>
                       </div>
                     </div>
@@ -161,7 +185,6 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Gradient Boosting Pricing Model */}
           <div className="lg:col-span-1">
              <Card className="h-full border-primary/20 shadow-lg shadow-primary/5">
                <CardHeader className="bg-primary/5 border-b border-primary/10">
@@ -184,12 +207,12 @@ export default function Dashboard() {
                  ) : (
                    <div className="divide-y">
                      {recommendations.map((rec) => (
-                       <div key={rec.id} className="p-4 hover:bg-slate-50 transition-colors">
+                       <div key={rec.id} className="p-4 hover:bg-slate-50 transition-colors" data-testid={`card-recommendation-${rec.id}`}>
                          <div className="flex justify-between items-start mb-2">
                            <h4 className="font-medium text-sm line-clamp-1 flex-1 mr-2" title={rec.productName}>
                              {rec.productName}
                            </h4>
-                           <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"} className="text-[10px] h-5">
+                           <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"} className="text-[10px] h-5" data-testid={`text-confidence-${rec.id}`}>
                              {(rec.confidence * 100).toFixed(0)}% Conf.
                            </Badge>
                          </div>
@@ -218,7 +241,9 @@ export default function Dashboard() {
                          <Button 
                            size="sm" 
                            className="w-full text-xs" 
-                           onClick={() => handleApplyPrice(rec.id, rec.recommendedPrice)}
+                           onClick={() => applyPriceMutation.mutate({ recId: rec.id, productId: rec.productId, price: rec.recommendedPrice })}
+                           disabled={applyPriceMutation.isPending}
+                           data-testid={`button-apply-${rec.id}`}
                          >
                            Apply Price Change
                          </Button>
