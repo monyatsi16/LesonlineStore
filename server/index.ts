@@ -76,7 +76,7 @@ app.use((req, res, next) => {
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      console.log(`\n  App is running at: http://localhost:${port}\n`);
     },
   );
 })();
