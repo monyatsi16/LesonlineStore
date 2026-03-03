@@ -33,76 +33,94 @@ export interface PriceRecommendation {
 export const PRODUCTS: Product[] = [
   {
     id: '1',
-    name: 'Basotho Blanket - Seanamarena',
-    price: 1250.00,
+    name: 'Smeg 90cm Black Ceramic Electric Hob - SE495ETD',
+    price: 15500.00,
     moq: 1,
-    supplier: 'Aranda Lesotho',
-    rating: 4.8,
-    reviews: 124,
-    image: 'https://images.unsplash.com/photo-1584917666458-9679237227d8?q=80&w=800',
-    category: 'Traditional Wear',
+    supplier: 'Smeg Official',
+    rating: 4.9,
+    reviews: 42,
+    image: 'https://lesonline.store/cdn/shop/files/5tvn5vzg.png?v=1753355592&width=533',
+    category: 'Built-in Hobs',
     specs: {
-      'Material': '100% Virgin Wool',
-      'Size': '155cm x 165cm',
-      'Origin': 'Made in Lesotho',
-      'Brand': 'Seanamarena'
+      'Size': '90cm',
+      'Material': 'Black Ceramic',
+      'Type': 'Electric Hob',
+      'Brand': 'Smeg'
     },
-    stock: 45,
-    description: 'Authentic 100% wool Basotho blanket, the iconic Seanamarena brand. A symbol of status and tradition in the Mountain Kingdom.'
+    stock: 12,
+    description: 'Premium Smeg 90cm black ceramic electric hob with multicooking technology.'
   },
   {
     id: '2',
-    name: 'Mokorotlo (Basotho Hat)',
-    price: 350.00,
-    moq: 5,
-    supplier: 'Thaba-Bosiu Crafts',
-    rating: 4.9,
-    reviews: 89,
-    image: 'https://images.unsplash.com/photo-1590005354167-6da97870c757?q=80&w=800',
-    category: 'Crafts',
+    name: 'Whirlpool 60cm Glass Hob - AKT8090/NE',
+    price: 4500.00,
+    moq: 1,
+    supplier: 'Whirlpool Authorized',
+    rating: 4.7,
+    reviews: 28,
+    image: 'https://lesonline.store/cdn/shop/files/ff3vyxzo.png?v=1697570992&width=533',
+    category: 'Built-in Hobs',
     specs: {
-      'Material': 'Loti Grass',
-      'Handmade': 'Yes',
-      'Symbol': 'National Identity'
+      'Size': '60cm',
+      'Material': 'Glass',
+      'Brand': 'Whirlpool'
     },
-    stock: 120,
-    description: 'Hand-woven conical straw hat, the national symbol of Lesotho, traditionally worn by the Basotho people.'
+    stock: 25,
+    description: 'Sleek Whirlpool 60cm glass hob for modern kitchens.'
   },
   {
     id: '3',
-    name: 'Maluti Mountain Coffee - 500g',
-    price: 185.00,
-    moq: 10,
-    supplier: 'Highland Roasters',
-    rating: 4.7,
+    name: 'DEFY-COMBINATION HOB - DHG605',
+    price: 6500.00,
+    moq: 1,
+    supplier: 'Defy Store',
+    rating: 4.8,
     reviews: 56,
-    image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=800',
-    category: 'Food & Beverage',
+    image: 'https://lesonline.store/cdn/shop/files/WhatsAppImage2023-06-26at19.08.28.jpg?v=1691657007&width=533',
+    category: 'Built-in Hobs',
     specs: {
-      'Weight': '500g',
-      'Roast': 'Medium-Dark',
-      'Altitude': '2000m+'
+      'Brand': 'Defy',
+      'Type': 'Combination',
+      'Model': 'DHG605'
     },
-    stock: 200,
-    description: 'Premium roasted coffee beans grown in the unique climate of the Lesotho highlands.'
+    stock: 18,
+    description: 'Versatile Defy combination hob with gas and electric burners.'
   },
   {
     id: '4',
-    name: 'Lesotho Highlands Honey',
-    price: 95.00,
-    moq: 20,
-    supplier: 'Mountain Apiaries',
-    rating: 4.9,
-    reviews: 210,
-    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=800',
-    category: 'Food & Beverage',
+    name: 'AEG 60cm Touch Control Ceramic Hob – HRB64600CB',
+    price: 4250.00,
+    moq: 1,
+    supplier: 'AEG Lesotho',
+    rating: 4.6,
+    reviews: 15,
+    image: 'https://lesonline.store/cdn/shop/products/AP105636-1.webp?v=1678805439&width=533',
+    category: 'Built-in Hobs',
     specs: {
-      'Type': 'Wild Blossom',
-      'Purity': '100% Raw',
-      'Location': 'Maluti Mountains'
+      'Brand': 'AEG',
+      'Control': 'Touch',
+      'Size': '60cm'
     },
-    stock: 15,
-    description: 'Pure, organic wild blossom honey harvested from the pristine Maluti mountains.'
+    stock: 8,
+    description: 'High-performance AEG ceramic hob with precise touch control.'
+  },
+  {
+    id: '5',
+    name: 'Siemens iQ700 90cm Black Gas on Glass Hob',
+    price: 19500.00,
+    moq: 1,
+    supplier: 'Siemens Premium',
+    rating: 5.0,
+    reviews: 10,
+    image: 'https://lesonline.store/cdn/shop/files/mnrad76o.png?v=1769070854&width=533',
+    category: 'Built-in Hobs',
+    specs: {
+      'Brand': 'Siemens',
+      'Type': 'Gas on Glass',
+      'Series': 'iQ700'
+    },
+    stock: 5,
+    description: 'Top-tier Siemens iQ700 gas on glass hob for professional-grade home cooking.'
   }
 ];
 
@@ -110,24 +128,35 @@ export const PRICE_RECOMMENDATIONS: PriceRecommendation[] = [
   {
     id: 'r1',
     productId: '1',
-    productName: 'Basotho Blanket - Seanamarena',
-    currentPrice: 1250.00,
-    recommendedPrice: 1325.00,
-    confidence: 0.94,
-    reason: 'Gradient Boosting: High seasonal demand residual. Residual 1 (Demand) is high.',
+    productName: 'Smeg 90cm Black Ceramic Electric Hob',
+    currentPrice: 15500.00,
+    recommendedPrice: 14850.00,
+    confidence: 0.92,
+    reason: 'Gradient Boosting: Competitor stock surplus detected. Negative residual to maintain market share.',
     timestamp: 'Just now',
-    trend: 'up'
+    trend: 'down'
   },
   {
     id: 'r2',
-    productId: '4',
-    productName: 'Lesotho Highlands Honey',
-    currentPrice: 95.00,
-    recommendedPrice: 89.50,
-    confidence: 0.88,
-    reason: 'Gradient Boosting: Seasonal surplus identified. Residual 2 (Inventory) driving price drop.',
-    timestamp: '10 mins ago',
-    trend: 'down'
+    productId: '2',
+    productName: 'Whirlpool 60cm Glass Hob',
+    currentPrice: 4500.00,
+    recommendedPrice: 4725.00,
+    confidence: 0.85,
+    reason: 'Gradient Boosting: High demand for compact hobs. Positive demand residual.',
+    timestamp: '5 mins ago',
+    trend: 'up'
+  },
+  {
+    id: 'r3',
+    productId: '5',
+    productName: 'Siemens iQ700 90cm Gas on Glass Hob',
+    currentPrice: 19500.00,
+    recommendedPrice: 20100.00,
+    confidence: 0.95,
+    reason: 'Gradient Boosting: Premium segment growth residual. Competitor prices rising.',
+    timestamp: '15 mins ago',
+    trend: 'up'
   }
 ];
 
