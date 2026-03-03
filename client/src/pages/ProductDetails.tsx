@@ -66,7 +66,7 @@ export default function ProductDetails() {
              <div className="bg-slate-50 p-4 rounded-lg border mb-6">
                 <div className="mb-4">
                    <div className="text-sm text-muted-foreground mb-1">Price</div>
-                   <div className="text-3xl font-bold text-primary">${product.price.toFixed(2)} <span className="text-sm font-normal text-slate-500">/ piece</span></div>
+                   <div className="text-3xl font-bold text-primary">M{product.price.toFixed(2)} <span className="text-sm font-normal text-slate-500">/ piece</span></div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-y-2 text-sm">

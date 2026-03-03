@@ -17,7 +17,7 @@ export default function Dashboard() {
   const handleApplyPrice = (id: string, newPrice: number) => {
     toast({
       title: "Price Updated Successfully",
-      description: `Product price updated to $${newPrice.toFixed(2)} via Smart Pricing API.`,
+      description: `Product price updated to M${newPrice.toFixed(2)} via LESonline API.`,
     });
     // Remove from list to simulate applied
     setRecommendations(prev => prev.filter(r => r.id !== id));
@@ -61,11 +61,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Revenue (LSL)</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
+              <div className="text-2xl font-bold">M45,231.89</div>
               <p className="text-xs text-muted-foreground">+20.1% from last month</p>
             </CardContent>
           </Card>
@@ -120,7 +120,7 @@ export default function Dashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `M${value}`} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
@@ -197,12 +197,12 @@ export default function Dashboard() {
                          <div className="grid grid-cols-2 gap-4 mb-3">
                             <div className="bg-slate-100 rounded p-2 text-center">
                               <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Current</div>
-                              <div className="font-mono font-medium">${rec.currentPrice.toFixed(2)}</div>
+                              <div className="font-mono font-medium">M{rec.currentPrice.toFixed(2)}</div>
                             </div>
                             <div className="bg-primary/10 rounded p-2 text-center relative overflow-hidden border border-primary/20">
                               <div className="text-[10px] text-primary uppercase tracking-wider font-bold">Suggested</div>
                               <div className="font-mono font-bold text-primary flex items-center justify-center gap-1">
-                                ${rec.recommendedPrice.toFixed(2)}
+                                M{rec.recommendedPrice.toFixed(2)}
                                 {rec.trend === 'up' && <ArrowUp className="h-3 w-3" />}
                                 {rec.trend === 'down' && <ArrowDown className="h-3 w-3" />}
                                 {rec.trend === 'stable' && <Minus className="h-3 w-3" />}

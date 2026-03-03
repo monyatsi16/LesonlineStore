@@ -13,11 +13,11 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/">
           <a className="flex items-center gap-2 mr-4 cursor-pointer">
-            <div className="bg-primary text-primary-foreground font-bold text-xl px-2 py-1 rounded">
-              LES
+            <div className="bg-primary text-primary-foreground font-bold text-lg px-2 py-1 rounded">
+              LSO
             </div>
             <span className="font-heading font-bold text-2xl tracking-tight hidden sm:block text-foreground">
-              LESonline
+              LESonline.Store
             </span>
           </a>
         </Link>

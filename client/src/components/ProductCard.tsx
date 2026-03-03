@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
           
           <div className="mb-2">
             <span className="text-lg font-bold text-foreground">
-              ${product.price.toFixed(2)}
+              M{product.price.toFixed(2)}
             </span>
             <span className="text-xs text-muted-foreground ml-1">/ piece</span>
           </div>

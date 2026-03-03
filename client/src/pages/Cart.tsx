@@ -79,7 +79,7 @@ export default function Cart() {
                            <span className="text-xs text-muted-foreground">Min: {item.product.moq}</span>
                         </div>
                         <div className="font-bold text-lg">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          M{(item.product.price * item.quantity).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -98,18 +98,18 @@ export default function Cart() {
               <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="font-medium">M{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping (Est.)</span>
-                  <span className="font-medium">${shipping.toFixed(2)}</span>
+                  <span className="font-medium">M{shipping.toFixed(2)}</span>
                 </div>
                 
                 <Separator />
                 
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total</span>
-                  <span className="text-primary">${total.toFixed(2)}</span>
+                  <span className="text-primary">M{total.toFixed(2)}</span>
                 </div>
 
                 <div className="bg-orange-50 p-3 rounded text-xs text-orange-800 flex gap-2 items-start">

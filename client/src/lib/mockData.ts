@@ -33,115 +33,101 @@ export interface PriceRecommendation {
 export const PRODUCTS: Product[] = [
   {
     id: '1',
-    name: 'Industrial CNC Laser Cutting Machine 1000W Fiber',
-    price: 15000.00,
+    name: 'Basotho Blanket - Seanamarena',
+    price: 1250.00,
     moq: 1,
-    supplier: 'Shenzhen Laser Tech Co., Ltd',
+    supplier: 'Aranda Lesotho',
     rating: 4.8,
     reviews: 124,
-    image: machineImg,
-    category: 'Machinery',
+    image: 'https://images.unsplash.com/photo-1584917666458-9679237227d8?q=80&w=800',
+    category: 'Traditional Wear',
     specs: {
-      'Power': '1000W',
-      'Working Area': '1300*2500mm',
-      'Laser Type': 'Fiber Laser',
-      'Cooling Mode': 'Water Cooling'
+      'Material': '100% Virgin Wool',
+      'Size': '155cm x 165cm',
+      'Origin': 'Made in Lesotho',
+      'Brand': 'Seanamarena'
     },
-    stock: 5,
-    description: 'High precision fiber laser cutting machine suitable for carbon steel, stainless steel, and aluminum. Includes 2-year warranty and onsite installation support.'
+    stock: 45,
+    description: 'Authentic 100% wool Basotho blanket, the iconic Seanamarena brand. A symbol of status and tradition in the Mountain Kingdom.'
   },
   {
     id: '2',
-    name: 'Wireless Noise Cancelling Headphones Bluetooth 5.3',
-    price: 24.50,
-    moq: 50,
-    supplier: 'AudioMasters Electronics',
-    rating: 4.5,
-    reviews: 856,
-    image: headphonesImg,
-    category: 'Consumer Electronics',
+    name: 'Mokorotlo (Basotho Hat)',
+    price: 350.00,
+    moq: 5,
+    supplier: 'Thaba-Bosiu Crafts',
+    rating: 4.9,
+    reviews: 89,
+    image: 'https://images.unsplash.com/photo-1590005354167-6da97870c757?q=80&w=800',
+    category: 'Crafts',
     specs: {
-      'Battery Life': '40 Hours',
-      'Bluetooth': 'V5.3',
-      'Driver': '40mm Dynamic',
-      'Charging': 'USB-C'
+      'Material': 'Loti Grass',
+      'Handmade': 'Yes',
+      'Symbol': 'National Identity'
     },
-    stock: 2000,
-    description: 'Premium sound quality with active noise cancellation. Bulk customization available for branding.'
+    stock: 120,
+    description: 'Hand-woven conical straw hat, the national symbol of Lesotho, traditionally worn by the Basotho people.'
   },
   {
     id: '3',
-    name: '100% Cotton Canvas Fabric Rolls - 280GSM',
-    price: 3.20,
-    moq: 500,
-    supplier: 'Global Textiles Ltd',
-    rating: 4.9,
-    reviews: 42,
-    image: fabricImg,
-    category: 'Apparel & Fabric',
+    name: 'Maluti Mountain Coffee - 500g',
+    price: 185.00,
+    moq: 10,
+    supplier: 'Highland Roasters',
+    rating: 4.7,
+    reviews: 56,
+    image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=800',
+    category: 'Food & Beverage',
     specs: {
-      'Material': '100% Cotton',
-      'Weight': '280GSM',
-      'Width': '150cm',
-      'Technics': 'Woven'
+      'Weight': '500g',
+      'Roast': 'Medium-Dark',
+      'Altitude': '2000m+'
     },
-    stock: 10000,
-    description: 'Heavy duty cotton canvas suitable for bags, shoes, and home decor. Eco-friendly dyeing process.'
+    stock: 200,
+    description: 'Premium roasted coffee beans grown in the unique climate of the Lesotho highlands.'
   },
   {
     id: '4',
-    name: 'Smart Watch Series 8 Clone - Heart Rate Monitor',
-    price: 12.80,
-    moq: 100,
-    supplier: 'Shenzhen Smart Wearables',
-    rating: 4.2,
-    reviews: 2100,
-    image: smartwatchImg,
-    category: 'Consumer Electronics',
+    name: 'Lesotho Highlands Honey',
+    price: 95.00,
+    moq: 20,
+    supplier: 'Mountain Apiaries',
+    rating: 4.9,
+    reviews: 210,
+    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=800',
+    category: 'Food & Beverage',
     specs: {
-      'Screen': '1.9 inch IPS',
-      'Waterproof': 'IP67',
-      'Battery': '280mAh',
-      'App': 'FitPro'
+      'Type': 'Wild Blossom',
+      'Purity': '100% Raw',
+      'Location': 'Maluti Mountains'
     },
-    stock: 5000,
-    description: 'Best-selling smart watch with fitness tracking, sleep monitoring, and bluetooth calling.'
+    stock: 15,
+    description: 'Pure, organic wild blossom honey harvested from the pristine Maluti mountains.'
   }
 ];
 
 export const PRICE_RECOMMENDATIONS: PriceRecommendation[] = [
   {
     id: 'r1',
-    productId: '2',
-    productName: 'Wireless Noise Cancelling Headphones',
-    currentPrice: 24.50,
-    recommendedPrice: 26.95,
-    confidence: 0.92,
-    reason: 'Gradient Boosting Model: High demand detected in North American region. Residual positive.',
-    timestamp: '2 mins ago',
+    productId: '1',
+    productName: 'Basotho Blanket - Seanamarena',
+    currentPrice: 1250.00,
+    recommendedPrice: 1325.00,
+    confidence: 0.94,
+    reason: 'Gradient Boosting: High seasonal demand residual. Residual 1 (Demand) is high.',
+    timestamp: 'Just now',
     trend: 'up'
   },
   {
     id: 'r2',
     productId: '4',
-    productName: 'Smart Watch Series 8 Clone',
-    currentPrice: 12.80,
-    recommendedPrice: 11.50,
-    confidence: 0.85,
-    reason: 'Gradient Boosting Model: Market saturation increasing. Negative residual adjustment.',
-    timestamp: '15 mins ago',
+    productName: 'Lesotho Highlands Honey',
+    currentPrice: 95.00,
+    recommendedPrice: 89.50,
+    confidence: 0.88,
+    reason: 'Gradient Boosting: Seasonal surplus identified. Residual 2 (Inventory) driving price drop.',
+    timestamp: '10 mins ago',
     trend: 'down'
-  },
-  {
-    id: 'r3',
-    productId: '3',
-    productName: '100% Cotton Canvas Fabric',
-    currentPrice: 3.20,
-    recommendedPrice: 3.25,
-    confidence: 0.65,
-    reason: 'Gradient Boosting Model: Raw material costs rising. Slight positive residual.',
-    timestamp: '1 hour ago',
-    trend: 'stable'
   }
 ];
 

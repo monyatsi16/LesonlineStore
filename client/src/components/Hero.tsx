@@ -15,18 +15,17 @@ export function Hero() {
       
       <div className="container relative z-10 mx-auto px-4 py-16 md:py-24 lg:py-32">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white backdrop-blur-md mb-6">
-            <span className="flex h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-            Global Trading Platform
-          </div>
+            <div className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1 rounded-full mb-6">
+              Official Lesotho B2B Platform
+            </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
-            The Leading B2B <br/>
+            Lesotho's Leading B2B <br/>
             <span className="text-primary">E-commerce Marketplace</span>
           </h1>
           
           <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-lg">
-            Source from millions of suppliers, optimize your pricing with AI, and manage logistics all in one place.
+            Source authentic Basotho products, optimize your pricing with Gradient Boosting, and grow your retail business.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
@@ -35,7 +34,7 @@ export function Hero() {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button size="lg" variant="secondary" className="text-base h-12 px-8 bg-white/10 text-white hover:bg-white/20 border-white/10 border">
-              Learn about AI Pricing
+              Pricing Model Demo
             </Button>
           </div>
 
@@ -57,8 +56,8 @@ export function Hero() {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-8 w-8 text-primary" />
               <div className="text-sm">
-                <div className="font-bold">Smart Pricing</div>
-                <div className="text-slate-400">Data-driven insights</div>
+                <div className="font-bold text-white">Smart Pricing</div>
+                <div className="text-slate-400">Gradient Boosting Model</div>
               </div>
             </div>
           </div>

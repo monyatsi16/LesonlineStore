@@ -37,13 +37,13 @@ export default function Home() {
         {/* Categories Banner */}
         <div className="mt-16 grid md:grid-cols-2 gap-6">
           <div className="bg-slate-100 rounded-lg p-8 flex flex-col justify-center">
-            <h3 className="text-2xl font-bold font-heading mb-2">Request for Quotation</h3>
-            <p className="text-muted-foreground mb-6">One request, multiple quotes. Get the best deal.</p>
+            <h3 className="text-2xl font-bold font-heading mb-2">Request for Quotation (RFQ)</h3>
+            <p className="text-muted-foreground mb-6">Connect with Lesotho-based manufacturers and suppliers directly.</p>
             <Button className="w-fit">Post Request</Button>
           </div>
           <div className="bg-orange-50 rounded-lg p-8 flex flex-col justify-center border border-orange-100">
-            <h3 className="text-2xl font-bold font-heading mb-2 text-orange-900">Trade Assurance</h3>
-            <p className="text-orange-800/80 mb-6">Protect your orders from payment to delivery.</p>
+            <h3 className="text-2xl font-bold font-heading mb-2 text-orange-900">Lesotho Trade Assurance</h3>
+            <p className="text-orange-800/80 mb-6">Protect your local and regional orders from payment to delivery.</p>
             <Button variant="outline" className="w-fit border-orange-200 text-orange-700 hover:bg-orange-100 hover:text-orange-900">Learn More</Button>
           </div>
         </div>
