@@ -1,11 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { Search, ShoppingCart, User, Menu, Bell } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
   const [location] = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
@@ -66,10 +68,25 @@ export function Navbar() {
             </Button>
           </Link>
 
-          <Button variant="ghost" className="gap-2">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <span className="hidden lg:inline text-sm font-medium">Sign In</span>
-          </Button>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <div className="hidden lg:flex flex-col items-end mr-1">
+                <span className="text-sm font-medium" data-testid="text-user-name">{user?.name}</span>
+                <span className="text-[10px] text-muted-foreground">{user?.businessName}</span>
+              </div>
+              <Button variant="ghost" className="gap-2" onClick={logout} data-testid="button-logout">
+                <LogOut className="h-5 w-5 text-muted-foreground" />
+                <span className="hidden lg:inline text-sm font-medium">Sign Out</span>
+              </Button>
+            </div>
+          ) : (
+            <Link href="/auth">
+              <Button variant="ghost" className="gap-2" data-testid="button-sign-in">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <span className="hidden lg:inline text-sm font-medium">Sign In</span>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
       

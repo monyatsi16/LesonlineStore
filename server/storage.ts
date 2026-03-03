@@ -1,9 +1,12 @@
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import {
+  users,
   products,
   priceRecommendations,
   salesData,
+  type User,
+  type InsertUser,
   type Product,
   type InsertProduct,
   type PriceRecommendation,
@@ -13,6 +16,10 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+
   getProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
@@ -27,6 +34,21 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [created] = await db.insert(users).values(user).returning();
+    return created;
+  }
+
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products);
   }

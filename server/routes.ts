@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertRecommendationSchema, type Product } from "@shared/schema";
+import { setupAuth } from "./auth";
 
 function runGradientBoosting(product: Product, demandFactor: number, inventoryFactor: number, competitorFactor: number) {
   let prediction = product.price;
@@ -40,6 +41,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  setupAuth(app);
 
   app.get("/api/products", async (_req, res) => {
     const products = await storage.getProducts();

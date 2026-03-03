@@ -3,6 +3,19 @@ import { pgTable, text, varchar, integer, real, jsonb, timestamp, serial } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  businessName: text("business_name").notNull(),
+  role: text("role").notNull().default("retailer"),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, role: true });
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
