@@ -19,8 +19,8 @@ export default function Home() {
       <main className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-heading font-bold text-foreground" data-testid="text-section-title">Products from LESonline.Store</h2>
-            <p className="text-muted-foreground text-sm mt-1">Browse our catalog of premium appliances</p>
+            <h2 className="text-2xl font-heading font-bold text-foreground" data-testid="text-section-title">Featured Products</h2>
+            <p className="text-muted-foreground text-sm mt-1">Browse our catalog of premium home appliances</p>
           </div>
           <Button variant="ghost" className="hidden sm:flex" data-testid="link-view-all">
             View All <ChevronRight className="ml-1 h-4 w-4" />
