@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertRecommendationSchema, type Product } from "@shared/schema";
+import { insertProductSchema, insertOrderSchema, insertRecommendationSchema, type Product } from "@shared/schema";
 import { setupAuth } from "./auth";
 
 function requireAuth(req: Request, res: Response): number | null {
@@ -52,11 +52,74 @@ export async function registerRoutes(
 
   setupAuth(app);
 
+  app.get("/api/marketplace", async (_req, res) => {
+    const allProducts = await storage.getAllProducts();
+    res.json(allProducts);
+  });
+
+  app.get("/api/marketplace/search", async (req, res) => {
+    const query = (req.query.q as string) || "";
+    if (!query.trim()) {
+      const allProducts = await storage.getAllProducts();
+      return res.json(allProducts);
+    }
+    const results = await storage.searchProducts(query);
+    res.json(results);
+  });
+
+  app.get("/api/marketplace/category/:category", async (req, res) => {
+    const results = await storage.getProductsByCategory(req.params.category);
+    res.json(results);
+  });
+
+  app.get("/api/marketplace/product/:id", async (req, res) => {
+    const product = await storage.getProduct(Number(req.params.id));
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    await storage.incrementProductViews(product.id);
+    const seller = await storage.getUser(product.userId);
+    res.json({ ...product, sellerName: seller?.businessName || "Unknown Seller" });
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    const { productId, buyerName, buyerEmail, buyerPhone, quantity } = req.body;
+    const product = await storage.getProduct(Number(productId));
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (product.stock < quantity) return res.status(400).json({ message: "Insufficient stock" });
+    if (quantity < product.moq) return res.status(400).json({ message: `Minimum order quantity is ${product.moq}` });
+
+    const stockUpdated = await storage.updateProductStock(product.id, quantity);
+    if (!stockUpdated) return res.status(400).json({ message: "Insufficient stock (concurrent order)" });
+
+    const order = await storage.createOrder({
+      productId: product.id,
+      sellerId: product.userId,
+      buyerName,
+      buyerEmail,
+      buyerPhone: buyerPhone || "",
+      quantity,
+      unitPrice: product.price,
+      totalPrice: product.price * quantity,
+    });
+
+    const now = new Date();
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = monthNames[now.getMonth()];
+
+    await storage.createSalesData({
+      userId: product.userId,
+      month: currentMonth,
+      revenue: order.totalPrice,
+      orders: 1,
+    });
+
+    res.status(201).json(order);
+  });
+
   app.get("/api/products", async (req, res) => {
     const userId = requireAuth(req, res);
     if (!userId) return;
-    const products = await storage.getProductsByUser(userId);
-    res.json(products);
+    const prods = await storage.getProductsByUser(userId);
+    res.json(prods);
   });
 
   app.get("/api/products/:id", async (req, res) => {
@@ -83,6 +146,25 @@ export async function registerRoutes(
     if (typeof price !== "number") return res.status(400).json({ message: "Price must be a number" });
     const updated = await storage.updateProductPrice(Number(req.params.id), userId, price);
     if (!updated) return res.status(404).json({ message: "Product not found" });
+    res.json(updated);
+  });
+
+  app.get("/api/orders/seller", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const sellerOrders = await storage.getOrdersBySeller(userId);
+    res.json(sellerOrders);
+  });
+
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const { status } = req.body;
+    if (!["pending", "confirmed", "shipped", "delivered", "cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const updated = await storage.updateOrderStatus(Number(req.params.id), userId, status);
+    if (!updated) return res.status(404).json({ message: "Order not found" });
     res.json(updated);
   });
 
@@ -130,39 +212,18 @@ export async function registerRoutes(
     res.json(data);
   });
 
-  app.post("/api/pricing/predict", async (req, res) => {
-    const userId = requireAuth(req, res);
-    if (!userId) return;
-    const { productId, demandFactor, inventoryFactor, competitorFactor } = req.body;
-    const product = await storage.getProductByUser(Number(productId), userId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    const result = runGradientBoosting(product, demandFactor, inventoryFactor, competitorFactor);
-
-    const rec = await storage.createRecommendation({
-      userId,
-      productId: product.id,
-      productName: product.name,
-      currentPrice: product.price,
-      recommendedPrice: result.recommendedPrice,
-      confidence: result.confidence,
-      reason: result.reason,
-      trend: result.trend,
-    });
-
-    res.json(rec);
-  });
-
   app.post("/api/pricing/run-model", async (req, res) => {
     const userId = requireAuth(req, res);
     if (!userId) return;
-    const products = await storage.getProductsByUser(userId);
+    const userProducts = await storage.getProductsByUser(userId);
     const results = [];
 
-    for (const product of products) {
-      const demandFactor = 0.8 + Math.random() * 0.4;
-      const inventoryFactor = product.stock > 15 ? 0.7 + Math.random() * 0.3 : 0.3 + Math.random() * 0.4;
-      const competitorFactor = 0.9 + Math.random() * 0.2;
+    for (const product of userProducts) {
+      const orderCount = await storage.getOrderCount(product.id);
+      const demandFactor = orderCount > 10 ? 1.2 : orderCount > 5 ? 1.1 : orderCount > 0 ? 1.0 : 0.85 + Math.random() * 0.3;
+      const inventoryFactor = product.stock > 15 ? 0.7 + Math.random() * 0.3 : product.stock > 5 ? 0.5 + Math.random() * 0.3 : 0.3 + Math.random() * 0.2;
+      const viewToOrderRatio = product.views > 0 ? orderCount / product.views : 0;
+      const competitorFactor = viewToOrderRatio > 0.1 ? 1.05 + Math.random() * 0.1 : 0.9 + Math.random() * 0.15;
 
       const result = runGradientBoosting(product, demandFactor, inventoryFactor, competitorFactor);
 
