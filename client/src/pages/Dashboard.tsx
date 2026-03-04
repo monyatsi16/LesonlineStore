@@ -231,159 +231,209 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sales Analytics (LSL)</CardTitle>
-                <CardDescription>Revenue from marketplace orders.</CardDescription>
-              </CardHeader>
-              <CardContent className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `M${value}`} />
-                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
-                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+        {products.length === 0 ? (
+          <Card className="border-dashed border-2">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
+                <Package className="h-8 w-8" />
+              </div>
+              <h2 className="text-xl font-heading font-bold mb-2">Welcome to your Dashboard!</h2>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                You haven't listed any products yet. Add your first product to start selling on the SmartPrice marketplace.
+              </p>
+              <Button className="gap-2" onClick={() => setAddProductOpen(true)} data-testid="button-add-first-product">
+                <Plus className="h-4 w-4" />
+                Add Your First Product
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              {salesData.length > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sales Analytics (LSL)</CardTitle>
+                    <CardDescription>Revenue from marketplace orders.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `M${value}`} />
+                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
+                        <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sales Analytics (LSL)</CardTitle>
+                    <CardDescription>Revenue from marketplace orders.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <TrendingUp className="h-10 w-10 mb-4 opacity-30" />
+                      <p className="font-medium">No sales data yet</p>
+                      <p className="text-xs mt-1">Sales will appear here once buyers start ordering your products.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            {sellerOrders.length > 0 && (
+              {sellerOrders.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Orders</CardTitle>
+                    <CardDescription>Orders from buyers on the marketplace</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {sellerOrders.slice(0, 10).map(order => (
+                        <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0" data-testid={`row-order-${order.id}`}>
+                          <div>
+                            <p className="font-medium text-sm">Order #{order.id} — {order.buyerName}</p>
+                            <p className="text-xs text-muted-foreground">{order.buyerEmail} · Qty: {order.quantity}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className="font-bold text-sm">M{order.totalPrice.toLocaleString()}</div>
+                              <Badge variant={order.status === "pending" ? "secondary" : order.status === "confirmed" ? "default" : "outline"} className="text-[10px]">
+                                {order.status}
+                              </Badge>
+                            </div>
+                            {order.status === "pending" && (
+                              <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: "confirmed" })} data-testid={`button-confirm-${order.id}`}>
+                                Confirm
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card>
-                <CardHeader>
-                  <CardTitle>Recent Orders</CardTitle>
-                  <CardDescription>Orders from buyers on the marketplace</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Your Products</CardTitle>
+                    <CardDescription>{products.length} listed on marketplace</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => setAddProductOpen(true)} data-testid="button-add-product-inline">
+                    <Plus className="h-3 w-3" />
+                    Add
+                  </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {sellerOrders.slice(0, 10).map(order => (
-                      <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0" data-testid={`row-order-${order.id}`}>
-                        <div>
-                          <p className="font-medium text-sm">Order #{order.id} — {order.buyerName}</p>
-                          <p className="text-xs text-muted-foreground">{order.buyerEmail} · Qty: {order.quantity}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <div className="font-bold text-sm">M{order.totalPrice.toLocaleString()}</div>
-                            <Badge variant={order.status === "pending" ? "secondary" : order.status === "confirmed" ? "default" : "outline"} className="text-[10px]">
-                              {order.status}
-                            </Badge>
+                  <div className="space-y-4">
+                    {products.map(product => (
+                      <div key={product.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0" data-testid={`row-inventory-${product.id}`}>
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded bg-slate-100 p-1 border">
+                            <img src={product.image} alt="" className="h-full w-full object-contain" />
                           </div>
-                          {order.status === "pending" && (
-                            <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: "confirmed" })} data-testid={`button-confirm-${order.id}`}>
-                              Confirm
-                            </Button>
-                          )}
+                          <div>
+                            <p className="font-medium text-sm">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">M{product.price.toLocaleString()} · {product.views} views</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">{product.stock} units</div>
+                          <div className={`text-xs ${product.stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                            {product.stock === 0 ? 'Out of Stock' : product.stock < 10 ? 'Low Stock' : 'In Stock'}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Products</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {products.map(product => (
-                    <div key={product.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0" data-testid={`row-inventory-${product.id}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded bg-slate-100 p-1 border">
-                          <img src={product.image} alt="" className="h-full w-full object-contain" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{product.name}</p>
-                          <p className="text-xs text-muted-foreground">M{product.price.toLocaleString()} · {product.views} views</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold">{product.stock} units</div>
-                        <div className={`text-xs ${product.stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
-                          {product.stock === 0 ? 'Out of Stock' : product.stock < 10 ? 'Low Stock' : 'In Stock'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-1">
-            <Card className="h-fit border-primary/20 shadow-lg shadow-primary/5">
-              <CardHeader className="bg-primary/5 border-b border-primary/10">
-                <div className="flex items-center gap-2">
-                  <BrainCircuit className="h-5 w-5 text-primary" />
-                  <CardTitle>Gradient Boosting Model</CardTitle>
-                </div>
-                <CardDescription>
-                  Uses real order data, views, and stock levels
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                {recommendations.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-4">
-                      <CheckIcon className="h-6 w-6" />
-                    </div>
-                    <p>All prices are optimized!</p>
-                    <p className="text-xs mt-2">Click "Run Gradient Boosting" to check again.</p>
+            <div className="lg:col-span-1">
+              <Card className="h-fit border-primary/20 shadow-lg shadow-primary/5">
+                <CardHeader className="bg-primary/5 border-b border-primary/10">
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5 text-primary" />
+                    <CardTitle>Gradient Boosting Model</CardTitle>
                   </div>
-                ) : (
-                  <div className="divide-y">
-                    {recommendations.map((rec) => (
-                      <div key={rec.id} className="p-4 hover:bg-slate-50 transition-colors" data-testid={`card-recommendation-${rec.id}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-sm line-clamp-1 flex-1 mr-2">{rec.productName}</h4>
-                          <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"} className="text-[10px] h-5" data-testid={`text-confidence-${rec.id}`}>
-                            {(rec.confidence * 100).toFixed(0)}%
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div className="bg-slate-100 rounded p-2 text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase">Current</div>
-                            <div className="font-mono font-medium">M{rec.currentPrice.toFixed(2)}</div>
+                  <CardDescription>
+                    Uses real order data, views, and stock levels
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {recommendations.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-4">
+                        <CheckIcon className="h-6 w-6" />
+                      </div>
+                      {products.length > 0 ? (
+                        <>
+                          <p>All prices are optimized!</p>
+                          <p className="text-xs mt-2">Click "Run Gradient Boosting" to check again.</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>No products yet</p>
+                          <p className="text-xs mt-2">Add products first, then run the model for pricing recommendations.</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {recommendations.map((rec) => (
+                        <div key={rec.id} className="p-4 hover:bg-slate-50 transition-colors" data-testid={`card-recommendation-${rec.id}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium text-sm line-clamp-1 flex-1 mr-2">{rec.productName}</h4>
+                            <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"} className="text-[10px] h-5" data-testid={`text-confidence-${rec.id}`}>
+                              {(rec.confidence * 100).toFixed(0)}%
+                            </Badge>
                           </div>
-                          <div className="bg-primary/10 rounded p-2 text-center border border-primary/20">
-                            <div className="text-[10px] text-primary uppercase font-bold">Suggested</div>
-                            <div className="font-mono font-bold text-primary flex items-center justify-center gap-1">
-                              M{rec.recommendedPrice.toFixed(2)}
-                              {rec.trend === 'up' && <ArrowUp className="h-3 w-3" />}
-                              {rec.trend === 'down' && <ArrowDown className="h-3 w-3" />}
-                              {rec.trend === 'stable' && <Minus className="h-3 w-3" />}
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div className="bg-slate-100 rounded p-2 text-center">
+                              <div className="text-[10px] text-muted-foreground uppercase">Current</div>
+                              <div className="font-mono font-medium">M{rec.currentPrice.toFixed(2)}</div>
+                            </div>
+                            <div className="bg-primary/10 rounded p-2 text-center border border-primary/20">
+                              <div className="text-[10px] text-primary uppercase font-bold">Suggested</div>
+                              <div className="font-mono font-bold text-primary flex items-center justify-center gap-1">
+                                M{rec.recommendedPrice.toFixed(2)}
+                                {rec.trend === 'up' && <ArrowUp className="h-3 w-3" />}
+                                {rec.trend === 'down' && <ArrowDown className="h-3 w-3" />}
+                                {rec.trend === 'stable' && <Minus className="h-3 w-3" />}
+                              </div>
                             </div>
                           </div>
+                          <div className="text-xs text-muted-foreground mb-3">{rec.reason}</div>
+                          <Button
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() => applyPriceMutation.mutate({ recId: rec.id, productId: rec.productId, price: rec.recommendedPrice })}
+                            disabled={applyPriceMutation.isPending}
+                            data-testid={`button-apply-${rec.id}`}
+                          >
+                            Apply Price Change
+                          </Button>
                         </div>
-                        <div className="text-xs text-muted-foreground mb-3">{rec.reason}</div>
-                        <Button
-                          size="sm"
-                          className="w-full text-xs"
-                          onClick={() => applyPriceMutation.mutate({ recId: rec.id, productId: rec.productId, price: rec.recommendedPrice })}
-                          disabled={applyPriceMutation.isPending}
-                          data-testid={`button-apply-${rec.id}`}
-                        >
-                          Apply Price Change
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
