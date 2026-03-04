@@ -80,7 +80,7 @@ export default function Home() {
     ? displayProducts.filter(p => p.category === selectedCategory)
     : displayProducts;
 
-  const categories = [...new Set(allProducts.map(p => p.category))];
+  const categories = Array.from(new Set(allProducts.map(p => p.category)));
 
   return (
     <div className="min-h-screen bg-background font-sans">
