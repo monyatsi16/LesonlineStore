@@ -43,7 +43,7 @@ export default function Auth() {
     },
     onSuccess: (user: any) => {
       queryClient.setQueryData(["/api/auth/user"], user);
-      toast({ title: "Account Created!", description: `Welcome to LESonline.Store, ${user.name}` });
+      toast({ title: "Account Created!", description: `Welcome to SmartPrice, ${user.name}! Your dashboard is ready.` });
       setLocation("/dashboard");
     },
     onError: (err: Error) => {
@@ -72,12 +72,12 @@ export default function Auth() {
               <Store className="h-7 w-7 text-primary" />
             </div>
             <CardTitle className="text-2xl font-heading" data-testid="text-auth-title">
-              {isLogin ? "Sign In to LESonline" : "Create Retailer Account"}
+              {isLogin ? "Sign In to SmartPrice" : "Register Your Business"}
             </CardTitle>
             <CardDescription>
               {isLogin
-                ? "Access your retailer dashboard and pricing tools"
-                : "Register your business to start using dynamic pricing"}
+                ? "Access your business dashboard and pricing tools"
+                : "Create an account for your e-commerce business in Lesotho"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -99,7 +99,7 @@ export default function Auth() {
                     <Label htmlFor="businessName">Business Name</Label>
                     <Input
                       id="businessName"
-                      placeholder="Maseru Home Appliances"
+                      placeholder="e.g. Maseru Home Appliances"
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       required
@@ -113,7 +113,7 @@ export default function Auth() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="retailer@example.com"
+                  placeholder="you@business.co.ls"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -161,7 +161,7 @@ export default function Auth() {
                     className="text-primary font-medium hover:underline"
                     data-testid="button-switch-to-register"
                   >
-                    Register here
+                    Register your business
                   </button>
                 </p>
               ) : (

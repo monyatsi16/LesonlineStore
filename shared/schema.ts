@@ -18,6 +18,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   name: text("name").notNull(),
   price: real("price").notNull(),
   moq: integer("moq").notNull().default(1),
@@ -33,6 +34,7 @@ export const products = pgTable("products", {
 
 export const priceRecommendations = pgTable("price_recommendations", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   productId: integer("product_id").notNull(),
   productName: text("product_name").notNull(),
   currentPrice: real("current_price").notNull(),
@@ -45,6 +47,7 @@ export const priceRecommendations = pgTable("price_recommendations", {
 
 export const salesData = pgTable("sales_data", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   month: text("month").notNull(),
   revenue: real("revenue").notNull(),
   orders: integer("orders").notNull(),

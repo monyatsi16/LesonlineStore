@@ -1,11 +1,11 @@
-# LESonline.Store - Dynamic Pricing System
+# SmartPrice - Dynamic Pricing Platform for Lesotho
 
 ## Overview
-A full-stack B2B e-commerce platform for Lesotho (LESonline.Store) featuring a Gradient Boosting pricing model for retailers. Built as an academic project demonstrating dynamic pricing algorithms.
+A full-stack multi-tenant dynamic pricing platform for all e-commerce businesses in Lesotho. Each business registers their own account and gets an isolated dashboard with their products, sales analytics, and AI-powered price recommendations using a Gradient Boosting model. All prices in Lesotho Maloti (LSL/M).
 
 ## Tech Stack
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui + Recharts
-- **Backend**: Express.js (Node.js)
+- **Backend**: Express.js (Node.js) + Passport.js (session auth)
 - **Database**: PostgreSQL with Drizzle ORM
 - **Routing**: Wouter (frontend), Express (API)
 - **State**: TanStack React Query
@@ -14,38 +14,47 @@ A full-stack B2B e-commerce platform for Lesotho (LESonline.Store) featuring a G
 ## Architecture
 ```
 client/src/
-  pages/         - Home, Dashboard, ProductDetails, Cart
-  components/    - Navbar, Hero, ProductCard
-  lib/           - queryClient, pricingModel
+  pages/         - Home, Dashboard, Auth
+  components/    - Navbar, Hero, ui/
+  hooks/         - useAuth.ts
+  lib/           - queryClient
 server/
   index.ts       - Express server entry
   routes.ts      - API routes (/api/*)
   storage.ts     - Database CRUD (IStorage interface)
-  db.ts          - Drizzle + Neon Serverless connection
-  seed.ts        - Database seeder
+  auth.ts        - Passport.js auth + demo data seeding on register
+  db.ts          - Drizzle + pg connection
+  seed.ts        - Database seeder (minimal, users self-seed on register)
 shared/
-  schema.ts      - Drizzle schema (products, price_recommendations, sales_data)
+  schema.ts      - Drizzle schema (users, products, price_recommendations, sales_data)
 ```
 
+## Multi-Tenancy
+- All data tables (products, price_recommendations, sales_data) have a `userId` foreign key
+- API routes filter all queries by `req.user.id`
+- New registrations auto-seed 5 demo products + 7 months of sales data
+- Each business sees only their own data
+
 ## API Routes
-- `GET /api/products` - List all products
-- `GET /api/products/:id` - Get single product
-- `POST /api/products` - Create product
-- `PATCH /api/products/:id/price` - Update product price
-- `GET /api/recommendations` - List pricing recommendations
-- `POST /api/recommendations` - Create recommendation
-- `DELETE /api/recommendations/:id` - Remove recommendation
-- `POST /api/recommendations/:id/apply` - Apply recommendation (updates price + removes rec)
-- `GET /api/sales` - Get sales data
-- `POST /api/pricing/predict` - Run Gradient Boosting prediction
+- `POST /api/register` - Register new business
+- `POST /api/login` - Login
+- `POST /api/logout` - Logout
+- `GET /api/user` - Get current user
+- `GET /api/products` - List user's products
+- `GET /api/recommendations` - List user's pricing recommendations
+- `POST /api/recommendations/:id/apply` - Apply recommendation
+- `GET /api/sales` - Get user's sales data
+- `POST /api/pricing/run-model` - Run Gradient Boosting model
 
 ## Database Tables
-- `products` - Product catalog (from lesonline.store)
-- `price_recommendations` - Gradient Boosting model outputs
-- `sales_data` - Monthly sales metrics
+- `users` - Business accounts (name, email, password, businessName)
+- `products` - Product catalog per business (userId FK)
+- `price_recommendations` - Gradient Boosting model outputs per business (userId FK)
+- `sales_data` - Monthly sales metrics per business (userId FK)
 
 ## Key Features
-- Real product data from LESonline.Store (built-in hobs, appliances)
-- Gradient Boosting pricing engine with 3 weak learners (Demand, Inventory, Competition)
-- Retailer dashboard with live charts and model recommendations
+- Multi-tenant: each business gets isolated data
+- Gradient Boosting pricing engine with demand/inventory/competition analysis
+- Business dashboard with revenue charts, inventory health, model recommendations
 - All prices in Lesotho Maloti (M)
+- Demo data automatically seeded on registration

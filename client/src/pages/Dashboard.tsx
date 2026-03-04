@@ -8,11 +8,13 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import type { Product, PriceRecommendation, SalesData } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
@@ -40,7 +42,7 @@ export default function Dashboard() {
     onSuccess: (_data, variables) => {
       toast({
         title: "Price Updated Successfully",
-        description: `Product price updated to M${variables.price.toFixed(2)} via LESonline API.`,
+        description: `Product price updated to M${variables.price.toFixed(2)}.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -54,7 +56,7 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
     setTimeout(() => {
       setIsRefreshing(false);
-      toast({ title: "Data Refreshed", description: "Latest market insights retrieved from backend." });
+      toast({ title: "Data Refreshed", description: "Latest market insights retrieved." });
     }, 1500);
   };
 
@@ -68,8 +70,10 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-dashboard-title">Retailer Dashboard</h1>
-            <p className="text-muted-foreground">Overview of your store performance and pricing insights.</p>
+            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-dashboard-title">
+              {user?.businessName || "Dashboard"}
+            </h1>
+            <p className="text-muted-foreground">Welcome, {user?.name}. Here's your store performance and pricing insights.</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={refreshData} disabled={isRefreshing} className="gap-2" data-testid="button-refresh">
@@ -91,27 +95,27 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-total-revenue">M{totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+              <p className="text-xs text-muted-foreground">From your sales data</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" data-testid="text-total-orders">+{totalOrders}</div>
-              <p className="text-xs text-muted-foreground">+18% from last month</p>
+              <div className="text-2xl font-bold" data-testid="text-total-orders">{totalOrders}</div>
+              <p className="text-xs text-muted-foreground">Across all months</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Products</CardTitle>
+              <CardTitle className="text-sm font-medium">Your Products</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-product-count">{products.length}</div>
-              <p className="text-xs text-muted-foreground">In catalog</p>
+              <p className="text-xs text-muted-foreground">In your catalog</p>
             </CardContent>
           </Card>
           <Card>
@@ -131,7 +135,7 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Sales Analytics (LSL)</CardTitle>
-                <CardDescription>Revenue trends from the database.</CardDescription>
+                <CardDescription>Your revenue trends.</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -193,7 +197,7 @@ export default function Dashboard() {
                    <CardTitle>Gradient Boosting Model</CardTitle>
                  </div>
                  <CardDescription>
-                   Dynamic price optimization for LESonline.Store
+                   Dynamic price optimization for {user?.businessName || "your business"}
                  </CardDescription>
                </CardHeader>
                <CardContent className="p-0">

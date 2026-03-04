@@ -22,6 +22,95 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+async function seedDemoData(userId: number, businessName: string) {
+  await storage.createProduct({
+    userId,
+    name: "60cm Ceramic Hob",
+    price: 4500.0,
+    moq: 1,
+    supplier: businessName,
+    rating: 4.7,
+    reviews: 12,
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop",
+    category: "Built-in Hobs",
+    specs: { Size: "60cm", Type: "Ceramic", Brand: "Generic" },
+    stock: 20,
+    description: "Standard 60cm ceramic hob for modern kitchens.",
+  });
+
+  await storage.createProduct({
+    userId,
+    name: "90cm Gas Cooktop",
+    price: 8500.0,
+    moq: 1,
+    supplier: businessName,
+    rating: 4.5,
+    reviews: 8,
+    image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=400&h=400&fit=crop",
+    category: "Gas Cooktops",
+    specs: { Size: "90cm", Type: "Gas", Burners: "5" },
+    stock: 15,
+    description: "Professional 90cm gas cooktop with 5 burners.",
+  });
+
+  await storage.createProduct({
+    userId,
+    name: "Built-in Electric Oven",
+    price: 12000.0,
+    moq: 1,
+    supplier: businessName,
+    rating: 4.8,
+    reviews: 22,
+    image: "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=400&h=400&fit=crop",
+    category: "Ovens",
+    specs: { Type: "Electric", Capacity: "65L", Features: "Fan-assisted" },
+    stock: 8,
+    description: "Premium built-in electric oven with fan-assisted cooking.",
+  });
+
+  await storage.createProduct({
+    userId,
+    name: "Countertop Microwave 30L",
+    price: 2800.0,
+    moq: 1,
+    supplier: businessName,
+    rating: 4.3,
+    reviews: 35,
+    image: "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=400&h=400&fit=crop",
+    category: "Microwaves",
+    specs: { Capacity: "30L", Power: "900W", Type: "Countertop" },
+    stock: 30,
+    description: "Compact 30L countertop microwave with multiple power levels.",
+  });
+
+  await storage.createProduct({
+    userId,
+    name: "Double Door Refrigerator",
+    price: 18500.0,
+    moq: 1,
+    supplier: businessName,
+    rating: 4.9,
+    reviews: 5,
+    image: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=400&h=400&fit=crop",
+    category: "Refrigerators",
+    specs: { Type: "Double Door", Capacity: "420L", Energy: "A+" },
+    stock: 6,
+    description: "Energy-efficient double door refrigerator with frost-free technology.",
+  });
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+  const baseRevenue = 20000 + Math.random() * 30000;
+  for (const month of months) {
+    const variance = 0.7 + Math.random() * 0.6;
+    await storage.createSalesData({
+      userId,
+      month,
+      revenue: Math.round(baseRevenue * variance),
+      orders: Math.round(10 + Math.random() * 30),
+    });
+  }
+}
+
 declare global {
   namespace Express {
     interface User {
@@ -37,7 +126,7 @@ declare global {
 export function setupAuth(app: Express) {
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "lesonline-store-secret-key-2024",
+      secret: process.env.SESSION_SECRET || "smartprice-lesotho-secret-2024",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -105,6 +194,8 @@ export function setupAuth(app: Express) {
         name,
         businessName,
       });
+
+      await seedDemoData(user.id, businessName);
 
       const { password: _, ...safeUser } = user;
 

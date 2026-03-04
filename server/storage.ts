@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -20,16 +20,17 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
-  getProducts(): Promise<Product[]>;
+  getProductsByUser(userId: number): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
+  getProductByUser(id: number, userId: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
-  updateProductPrice(id: number, price: number): Promise<Product | undefined>;
+  updateProductPrice(id: number, userId: number, price: number): Promise<Product | undefined>;
 
-  getRecommendations(): Promise<PriceRecommendation[]>;
+  getRecommendationsByUser(userId: number): Promise<PriceRecommendation[]>;
   createRecommendation(rec: InsertRecommendation): Promise<PriceRecommendation>;
-  deleteRecommendation(id: number): Promise<void>;
+  deleteRecommendationByUser(id: number, userId: number): Promise<boolean>;
 
-  getSalesData(): Promise<SalesData[]>;
+  getSalesDataByUser(userId: number): Promise<SalesData[]>;
   createSalesData(data: InsertSalesData): Promise<SalesData>;
 }
 
@@ -49,12 +50,17 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async getProducts(): Promise<Product[]> {
-    return await db.select().from(products);
+  async getProductsByUser(userId: number): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.userId, userId));
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async getProductByUser(id: number, userId: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(and(eq(products.id, id), eq(products.userId, userId)));
     return product;
   }
 
@@ -63,17 +69,17 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateProductPrice(id: number, price: number): Promise<Product | undefined> {
+  async updateProductPrice(id: number, userId: number, price: number): Promise<Product | undefined> {
     const [updated] = await db
       .update(products)
       .set({ price })
-      .where(eq(products.id, id))
+      .where(and(eq(products.id, id), eq(products.userId, userId)))
       .returning();
     return updated;
   }
 
-  async getRecommendations(): Promise<PriceRecommendation[]> {
-    return await db.select().from(priceRecommendations);
+  async getRecommendationsByUser(userId: number): Promise<PriceRecommendation[]> {
+    return await db.select().from(priceRecommendations).where(eq(priceRecommendations.userId, userId));
   }
 
   async createRecommendation(rec: InsertRecommendation): Promise<PriceRecommendation> {
@@ -81,12 +87,13 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async deleteRecommendation(id: number): Promise<void> {
-    await db.delete(priceRecommendations).where(eq(priceRecommendations.id, id));
+  async deleteRecommendationByUser(id: number, userId: number): Promise<boolean> {
+    const result = await db.delete(priceRecommendations).where(and(eq(priceRecommendations.id, id), eq(priceRecommendations.userId, userId))).returning();
+    return result.length > 0;
   }
 
-  async getSalesData(): Promise<SalesData[]> {
-    return await db.select().from(salesData);
+  async getSalesDataByUser(userId: number): Promise<SalesData[]> {
+    return await db.select().from(salesData).where(eq(salesData.userId, userId));
   }
 
   async createSalesData(data: InsertSalesData): Promise<SalesData> {

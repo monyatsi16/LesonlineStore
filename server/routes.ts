@@ -1,8 +1,16 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertRecommendationSchema, type Product } from "@shared/schema";
 import { setupAuth } from "./auth";
+
+function requireAuth(req: Request, res: Response): number | null {
+  if (!req.isAuthenticated() || !req.user) {
+    res.status(401).json({ message: "You must be signed in" });
+    return null;
+  }
+  return req.user.id;
+}
 
 function runGradientBoosting(product: Product, demandFactor: number, inventoryFactor: number, competitorFactor: number) {
   let prediction = product.price;
@@ -44,73 +52,95 @@ export async function registerRoutes(
 
   setupAuth(app);
 
-  app.get("/api/products", async (_req, res) => {
-    const products = await storage.getProducts();
+  app.get("/api/products", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const products = await storage.getProductsByUser(userId);
     res.json(products);
   });
 
   app.get("/api/products/:id", async (req, res) => {
-    const product = await storage.getProduct(Number(req.params.id));
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const product = await storage.getProductByUser(Number(req.params.id), userId);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   });
 
   app.post("/api/products", async (req, res) => {
-    const parsed = insertProductSchema.safeParse(req.body);
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const parsed = insertProductSchema.safeParse({ ...req.body, userId });
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const product = await storage.createProduct(parsed.data);
     res.status(201).json(product);
   });
 
   app.patch("/api/products/:id/price", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
     const { price } = req.body;
     if (typeof price !== "number") return res.status(400).json({ message: "Price must be a number" });
-    const updated = await storage.updateProductPrice(Number(req.params.id), price);
+    const updated = await storage.updateProductPrice(Number(req.params.id), userId, price);
     if (!updated) return res.status(404).json({ message: "Product not found" });
     res.json(updated);
   });
 
-  app.get("/api/recommendations", async (_req, res) => {
-    const recs = await storage.getRecommendations();
+  app.get("/api/recommendations", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const recs = await storage.getRecommendationsByUser(userId);
     res.json(recs);
   });
 
   app.post("/api/recommendations", async (req, res) => {
-    const parsed = insertRecommendationSchema.safeParse(req.body);
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const parsed = insertRecommendationSchema.safeParse({ ...req.body, userId });
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const rec = await storage.createRecommendation(parsed.data);
     res.status(201).json(rec);
   });
 
   app.delete("/api/recommendations/:id", async (req, res) => {
-    await storage.deleteRecommendation(Number(req.params.id));
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const deleted = await storage.deleteRecommendationByUser(Number(req.params.id), userId);
+    if (!deleted) return res.status(404).json({ message: "Recommendation not found" });
     res.json({ success: true });
   });
 
   app.post("/api/recommendations/:id/apply", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
     const { price, productId } = req.body;
     if (typeof price !== "number" || typeof productId !== "number") {
       return res.status(400).json({ message: "Price and productId are required" });
     }
-    const updated = await storage.updateProductPrice(productId, price);
+    const updated = await storage.updateProductPrice(productId, userId, price);
     if (!updated) return res.status(404).json({ message: "Product not found" });
-    await storage.deleteRecommendation(Number(req.params.id));
+    await storage.deleteRecommendationByUser(Number(req.params.id), userId);
     res.json(updated);
   });
 
-  app.get("/api/sales", async (_req, res) => {
-    const data = await storage.getSalesData();
+  app.get("/api/sales", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const data = await storage.getSalesDataByUser(userId);
     res.json(data);
   });
 
   app.post("/api/pricing/predict", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
     const { productId, demandFactor, inventoryFactor, competitorFactor } = req.body;
-    const product = await storage.getProduct(Number(productId));
+    const product = await storage.getProductByUser(Number(productId), userId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     const result = runGradientBoosting(product, demandFactor, inventoryFactor, competitorFactor);
 
     const rec = await storage.createRecommendation({
+      userId,
       productId: product.id,
       productName: product.name,
       currentPrice: product.price,
@@ -123,8 +153,10 @@ export async function registerRoutes(
     res.json(rec);
   });
 
-  app.post("/api/pricing/run-model", async (_req, res) => {
-    const products = await storage.getProducts();
+  app.post("/api/pricing/run-model", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+    const products = await storage.getProductsByUser(userId);
     const results = [];
 
     for (const product of products) {
@@ -136,6 +168,7 @@ export async function registerRoutes(
 
       if (Math.abs(result.recommendedPrice - product.price) / product.price > 0.01) {
         const rec = await storage.createRecommendation({
+          userId,
           productId: product.id,
           productName: product.name,
           currentPrice: product.price,
