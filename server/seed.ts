@@ -1,19 +1,19 @@
-import "dotenv/config";
-import { Pool } from "pg";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
 import { users } from "@shared/schema";
+
+neonConfig.webSocketConstructor = ws;
 
 async function seed() {
   if (!process.env.DATABASE_URL) {
     console.error("ERROR: DATABASE_URL is not set.");
-    console.error("Make sure you have a .env file with:");
-    console.error("DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/lesonline");
     process.exit(1);
   }
 
   console.log("Connecting to database...");
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const db = drizzle({ client: pool as any });
+  const db = drizzle({ client: pool });
 
   const existingUsers = await db.select().from(users);
   if (existingUsers.length > 0) {

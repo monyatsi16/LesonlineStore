@@ -1,0 +1,825 @@
+
+/
+
+
+npm run dev
+603m
+ • 
+10 hours ago
+Port :5000 opened on
+client/src/index.css
+-3
++16
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Barlow', sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-primary-border: hsl(var(--primary-border));
+  --color-accent-border: hsl(var(--accent-border));
+  --color-card-border: hsl(var(--card-border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+-192
++64
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  /* Automatically computed borders: They're already hsl() wrapped. That's okay.
+   * The only reason you don't want to wrap them in hsl() in theme tokens is so that
+   * tailwind can create opacity utilities based on them, which is not important for
+   * borders usually. */
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-primary-border: var(--primary-border);
+  --color-secondary-border: var(--secondary-border);
+  --color-muted-border: var(--muted-border);
+  --color-accent-border: var(--accent-border);
+  --color-destructive-border: var(--destructive-border);
+}
+/* LIGHT MODE */
+/* LIGHT MODE - Global Trade Professional Theme */
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  /* Alibaba-inspired Orange: #FF6A00 (approx 25 100% 50%) but slightly more modern */
+  /* Clean white backgrounds, subtle grays for structure */
+  
+  --background: 0 0% 100%;       /* #FFFFFF */
+  --foreground: 222 47% 11%;     /* #0F172A - Deep Blue/Black for text */
+  /* Automatic computation of border around primary / danger buttons */
+  --opaque-button-border-intensity: -8; /* In terms of percentages */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  /* Backgrounds applied on top of other backgrounds when hovered/active */
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --background: red; /*replace with H S L */
+  /* Primary Action Color - Vibrant Orange */
+  --primary: 25 95% 53%;         /* #FA8C16 */
+  --primary-foreground: 0 0% 100%;
+  --foreground: red; /*replace with H S L */
+  /* Secondary - Deep Navy for Trust */
+  --secondary: 215 25% 27%;      /* #334155 */
+  --secondary-foreground: 0 0% 100%;
+  --border: red; /*replace with H S L */
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --card: red; /*replace with H S L */
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --card-foreground: red; /*replace with H S L */
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --card-border: red; /*replace with H S L */
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 25 95% 53%;
+  --sidebar: red; /*replace with H S L */
+  --radius: 0.35rem;
+  --sidebar-foreground: red; /*replace with H S L */
+  --chart-1: 25 95% 53%;   /* Orange */
+  --chart-2: 215 25% 27%;  /* Navy */
+  --chart-3: 142 71% 45%;  /* Green */
+  --chart-4: 48 96% 53%;   /* Yellow */
+  --chart-5: 0 84% 60%;    /* Red */
+  --sidebar-border: red; /*replace with H S L */
+  --sidebar-primary: red; /*replace with H S L */
+  --sidebar-primary-foreground: red; /*replace with H S L */
+  --sidebar-accent: red; /*replace with H S L */
+  --sidebar-accent-foreground: red; /*replace with H S L */
+  --sidebar-ring: red; /*replace with H S L */
+  --popover: red; /*replace with H S L */
+  --popover-foreground: red; /*replace with H S L */
+  --popover-border: red; /*replace with H S L */
+  --primary: red; /*replace with H S L */
+  --primary-foreground: red; /*replace with H S L */
+  --secondary: red; /*replace with H S L */
+  --secondary-foreground: red; /*replace with H S L */
+  --muted: red; /*replace with H S L */
+  --muted-foreground: red; /*replace with H S L */
+  --accent: red; /*replace with H S L */
+  --accent-foreground: red; /*replace with H S L */
+  --destructive: red; /*replace with H S L */
+  --destructive-foreground: red; /*replace with H S L */
+  --input: red; /*replace with H S L */
+  --ring: red; /*replace with H S L */
+  --chart-1: red; /*replace with H S L */
+  --chart-2: red; /*replace with H S L */
+  --chart-3: red; /*replace with H S L */
+  --chart-4: red; /*replace with H S L */
+  --chart-5: red; /*replace with H S L */
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: .5rem; /* 8px */
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
+  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+  /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
+  /* Fallback for older browsers */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  /* Fallback for older browsers */
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 240 5.9% 10%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+}
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --opaque-button-border-intensity: 9;  /* In terms of percentages */
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  /* Backgrounds applied on top of other backgrounds when hovered/active */
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --background: red; /*replace with H S L */
+  --primary: 25 95% 53%;
+  --primary-foreground: 0 0% 100%;
+  --foreground: red; /*replace with H S L */
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --border: red; /*replace with H S L */
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --card: red; /*replace with H S L */
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --card-foreground: red; /*replace with H S L */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --card-border: red; /*replace with H S L */
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 25 95% 53%;
+  --sidebar: red; /*replace with H S L */
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+  --sidebar-foreground: red; /*replace with H S L */
+  --sidebar-border: red; /*replace with H S L */
+  --sidebar-primary: red; /*replace with H S L */
+  --sidebar-primary-foreground: red; /*replace with H S L */
+  --sidebar-accent: red; /*replace with H S L */
+  --sidebar-accent-foreground: red; /*replace with H S L */
+  --sidebar-ring: red; /*replace with H S L */
+  --popover: red; /*replace with H S L */
+  --popover-foreground: red; /*replace with H S L */
+  --popover-border: red; /*replace with H S L */
+  --primary: red; /*replace with H S L */
+  --primary-foreground: red; /*replace with H S L */
+  --secondary: red; /*replace with H S L */
+  --secondary-foreground: red; /*replace with H S L */
+  --muted: red; /*replace with H S L */
+  --muted-foreground: red; /*replace with H S L */
+  --accent: red; /*replace with H S L */
+  --accent-foreground: red; /*replace with H S L */
+  --destructive: red; /*replace with H S L */
+  --destructive-foreground: red; /*replace with H S L */
+  /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
+  --input: red; /*replace with H S L */
+  --ring: red; /*replace with H S L */
+  --chart-1: red; /*replace with H S L */
+  --chart-2: red; /*replace with H S L */
+  --chart-3: red; /*replace with H S L */
+  --chart-4: red; /*replace with H S L */
+  --chart-5: red; /*replace with H S L */
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1...
+[truncated]
+[truncated]
+[truncated]
+-1
++1
+[truncated]
+[truncated]
+No file found at "client/src/lib/mockData.ts", it may have been deleted
+No file found at "client/src/lib/mockData.ts", it may have been deleted
+No file found at "client/src/components/ProductCard.tsx", it may have been deleted
+server/seed.ts
+-5
++11
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import "dotenv/config";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
+import { products, priceRecommendations, salesData } from "@shared/schema";
+neonConfig.webSocketConstructor = ws;
+async function seed() {
+  if (!process.env.DATABASE_URL) {
+    console.error("ERROR: DATABASE_URL is not set.");
+    console.error("Make sure you have a .env file with:");
+    console.error("DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/lesonline");
+    process.exit(1);
+  }
+async function seed() {
+  console.log("Connecting to database...");
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle({ client: pool });
+  const db = drizzle({ client: pool as any });
+  const existingProducts = await db.select().from(products);
+  if (existingProducts.length > 0) {
+server/index.ts
+-0
++1
+import "dotenv/config";
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes";
+import { serveStatic } from "./static";
+server/db.ts
+-6
++3
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
+import * as schema from "@shared/schema";
+neonConfig.webSocketConstructor = ws;
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL must be set.");
+  throw new Error("DATABASE_URL must be set. Check your .env file.");
+}
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle({ client: pool, schema });
+export const db = drizzle({ client: pool as any, schema });
+shared/schema.ts
+-0
++13
+import { pgTable, text, varchar, integer, real, jsonb, timestamp, serial } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  businessName: text("business_name").notNull(),
+  role: text("role").notNull().default("retailer"),
+});
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, role: true });
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+server/storage.ts
+-0
++15
+}
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+  async createUser(user: InsertUser): Promise<User> {
+    const [created] = await db.insert(users).values(user).returning();
+    return created;
+  }
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products);
+  }
+server/storage.ts
+-0
++3
+import { eq } from "drizzle-orm";
+import { db } from "./db";
+import {
+  users,
+  products,
+  priceRecommendations,
+  salesData,
+  type User,
+  type InsertUser,
+  type Product,
+  type InsertProduct,
+  type PriceRecommendation,
+-0
++4
+} from "@shared/schema";
+export interface IStorage {
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  getProducts(): Promise<Product[]>;
+  getProduct(id: number): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+server/routes.ts
+-0
++1
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertProductSchema, insertRecommendationSchema, type Product } from "@shared/schema";
+import { setupAuth } from "./auth";
+function runGradientBoosting(product: Product, demandFactor: number, inventoryFactor: number, competitorFactor: number) {
+  let prediction = product.price;
+server/routes.ts
+-0
++2
+  httpServer: Server,
+  app: Express
+): Promise<Server> {
+  setupAuth(app);
+  app.get("/api/products", async (_req, res) => {
+    const products = await storage.getProducts();
+import { Navbar } from "@/components/Navbar";
+import { Hero } from "@/components/Hero";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { BrainCircuit, BarChart3, Store, Shield, TrendingUp, Users } from "lucide-react";
+import { Link } from "wouter";
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-background font-sans">
+      <Navbar />
+      <Hero />
+      
+      <main className="container mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-heading font-bold text-foreground mb-3" data-testid="text-section-title">
+            How SmartPrice Works
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            A dynamic pricing platform built for Lesotho's e-commerce businesses. Register your store, add your products, and let our Gradient Boosting model find the best prices.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <Card className="text-center p-6">
+            <CardContent className="pt-6">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <Store className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">1. Register Your Business</h3>
+              <p className="text-sm text-muted-foreground">
+                Create an account with your business name. We set up your dashboard with demo products so you can see the platform in action.
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1"
+    />
+
+    <meta
+      property="og:title"
+      content="SmartPrice Lesotho - Dynamic Pricing for E-commerce"
+    />
+    <meta
+      property="og:description"
+      content="AI-powered dynamic pricing platform for all e-commerce businesses in Lesotho. Gradient Boosting model with LSL pricing."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/hero-banner.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@replit" />
+    <meta
+      name="twitter:title"
+      content="SmartPrice Lesotho - Dynamic Pricing for E-commerce"
+    />
+    <meta
+      name="twitter:description"
+      content="AI-powered dynamic pricing platform for all e-commerce businesses in Lesotho."
+    />
+    <meta name="twitter:image" content="/hero-banner.png" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2" +
+  " hover-elevate ",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground shadow-xs",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground shadow-xs",
+        outline: "text-foreground border [border-color:var(--badge-outline)]",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  )
+}
+
+export { Badge, badgeVariants }
+
+client/src/components/ui/button.tsx
+-6
++0
+    variants: {
+      variant: {
+        default:
+           // @replit: no hover, and add primary border
+           "bg-primary text-primary-foreground border border-primary-border",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm border-destructive-border",
+        outline:
+          // @replit Shows the background color of whatever card / sidebar / accent background it is inside of.
+          // Inherits the current text color. Uses shadow-xs. no shadow on active
+          // No hover state
+          " border [border-color:var(--button-outline)] shadow-xs active:shadow-none ",
+        secondary:
+          // @replit border, no hover, no shadow, secondary border.
+          "border bg-secondary text-secondary-foreground border border-secondary-border ",
+        // @replit no hover, transparent border
+        ghost: "border border-transparent",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+client/src/components/ui/button.tsx
+-1
++0
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        // @replit changed sizes
+        default: "min-h-9 px-4 py-2",
+        sm: "min-h-8 rounded-md px-3 text-xs",
+        lg: "min-h-10 rounded-md px-8",
+client/src/components/ui/badge.tsx
+-6
++0
+import { cn } from "@/lib/utils"
+const badgeVariants = cva(
+  // @replit
+  // Whitespace-nowrap: Badges should never wrap.
+  "whitespace-nowrap inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2" +
+  " hover-elevate ",
+  {
+    variants: {
+      variant: {
+        default:
+          // @replit shadow-xs instead of shadow, no hover because we use hover-elevate
+          "border-transparent bg-primary text-primary-foreground shadow-xs",
+        secondary:
+          // @replit no hover because we use hover-elevate
+          "border-transparent bg-secondary text-secondary-foreground",
+        destructive:
+          // @replit shadow-xs instead of shadow, no hover because we use hover-elevate
+          "border-transparent bg-destructive text-destructive-foreground shadow-xs",
+          // @replit shadow-xs" - use badge outline variable
+        outline: "text-foreground border [border-color:var(--badge-outline)]",
+      },
+    },
+vite.config.ts
+-15
++0
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { metaImagesPlugin } from "./vite-plugin-meta-images";
+export default defineConfig({
+  plugins: [
+    react(),
+    runtimeErrorOverlay(),
+    tailwindcss(),
+    metaImagesPlugin(),
+    ...(process.env.NODE_ENV !== "production" &&
+    process.env.REPL_ID !== undefined
+      ? [
+          await import("@replit/vite-plugin-cartographer").then((m) =>
+            m.cartographer(),
+          ),
+          await import("@replit/vite-plugin-dev-banner").then((m) =>
+            m.devBanner(),
+          ),
+        ]
+      : []),
+  ],
+  resolve: {
+    alias: {
+import { Button } from "@/components/ui/button";
+import { ArrowRight, ShieldCheck, BarChart3, TrendingUp } from "lucide-react";
+import { Link } from "wouter";
+
+export function Hero() {
+  return (
+    <div className="relative bg-slate-900 text-white overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-20 bg-gradient-to-br from-primary/30 to-transparent"></div>
+      
+      <div className="container relative z-10 mx-auto px-4 py-16 md:py-24 lg:py-32">
+        <div className="max-w-2xl">
+            <div className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1 rounded-full mb-6 inline-block">
+              Dynamic Pricing Platform for Lesotho
+            </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
+            Smart Pricing for <br/>
+            <span className="text-primary">Every E-commerce Business</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-lg">
+            Register your business, manage your products, and let our Gradient Boosting model optimize your prices in Lesotho Maloti (LSL).
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/auth">
+              <Button size="lg" className="text-base h-12 px-8" data-testid="button-get-started">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/auth">
+              <Button size="lg" variant="secondary" className="text-base h-12 px-8 bg-white/10 text-white hover:bg-white/20 border-white/10 border" data-testid="button-sign-in-hero">
+                Sign In to Dashboard
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-8">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Secure Platform</div>
+                <div className="text-slate-400">Your data, your business</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Sales Analytics</div>
+                <div className="text-slate-400">Track performance</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold text-white">Gradient Boosting</div>
+                <div className="text-slate-400">AI-powered pricing</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+import { Button } from "@/components/ui/button";
+import { ArrowRight, ShieldCheck, BarChart3, TrendingUp } from "lucide-react";
+import { Link } from "wouter";
+
+export function Hero() {
+  return (
+    <div className="relative bg-slate-900 text-white overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-20 bg-gradient-to-br from-primary/30 to-transparent"></div>
+      
+      <div className="container relative z-10 mx-auto px-4 py-16 md:py-24 lg:py-32">
+        <div className="max-w-2xl">
+            <div className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1 rounded-full mb-6 inline-block">
+              Dynamic Pricing Platform for Lesotho
+            </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
+            Smart Pricing for <br/>
+            <span className="text-primary">Every E-commerce Business</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-lg">
+            Register your business, manage your products, and let our Gradient Boosting model optimize your prices in Lesotho Maloti (LSL).
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/auth">
+              <Button size="lg" className="text-base h-12 px-8" data-testid="button-get-started">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/auth">
+              <Button size="lg" variant="secondary" className="text-base h-12 px-8 bg-white/10 text-white hover:bg-white/20 border-white/10 border" data-testid="button-sign-in-hero">
+                Sign In to Dashboard
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-8">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Secure Platform</div>
+                <div className="text-slate-400">Your data, your business</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Sales Analytics</div>
+                <div className="text-slate-400">Track performance</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold text-white">Gradient Boosting</div>
+                <div className="text-slate-400">AI-powered pricing</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+import { Button } from "@/components/ui/button";
+import { ArrowRight, ShieldCheck, BarChart3, TrendingUp } from "lucide-react";
+import { Link } from "wouter";
+
+export function Hero() {
+  return (
+    <div className="relative bg-slate-900 text-white overflow-hidden">
+      <div className="absolute inset-0 z-0 opacity-20 bg-gradient-to-br from-primary/30 to-transparent"></div>
+      
+      <div className="container relative z-10 mx-auto px-4 py-16 md:py-24 lg:py-32">
+        <div className="max-w-2xl">
+            <div className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1 rounded-full mb-6 inline-block">
+              Dynamic Pricing Platform for Lesotho
+            </div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
+            Smart Pricing for <br/>
+            <span className="text-primary">Every E-commerce Business</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-200 mb-8 max-w-lg">
+            Register your business, manage your products, and let our Gradient Boosting model optimize your prices in Lesotho Maloti (LSL).
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/auth">
+              <Button size="lg" className="text-base h-12 px-8" data-testid="button-get-started">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/auth">
+              <Button size="lg" variant="secondary" className="text-base h-12 px-8 bg-white/10 text-white hover:bg-white/20 border-white/10 border" data-testid="button-sign-in-hero">
+                Sign In to Dashboard
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-8">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Secure Platform</div>
+                <div className="text-slate-400">Your data, your business</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold">Sales Analytics</div>
+                <div className="text-slate-400">Track performance</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-8 w-8 text-primary" />
+              <div className="text-sm">
+                <div className="font-bold text-white">Gradient Boosting</div>
+                <div className="text-slate-400">AI-powered pricing</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+shared/schema.ts
+-0
++1
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  price: real("price").notNull(),
+  moq: integer("moq").notNull().default(1),
+-0
++1
+export const priceRecommendations = pgTable("price_recommendations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  productId: integer("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  currentPrice: real("current_price").notNull(),
+-0
++1
+export const salesData = pgTable("sales_data", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  month: text("month").notNull(),
+  revenue: real("revenue").notNull(),
+  orders: integer("orders").notNull(),
