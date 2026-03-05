@@ -239,7 +239,7 @@ export default function Dashboard() {
               </div>
               <h2 className="text-xl font-heading font-bold mb-2">Welcome to your Dashboard!</h2>
               <p className="text-muted-foreground text-center max-w-md mb-6">
-                You haven't listed any products yet. Add your first product to start selling on the SmartPrice marketplace.
+                You haven't listed any products yet. Add your first product to start selling on the LesOnline marketplace.
               </p>
               <Button className="gap-2" onClick={() => setAddProductOpen(true)} data-testid="button-add-first-product">
                 <Plus className="h-4 w-4" />

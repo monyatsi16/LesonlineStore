@@ -14,10 +14,10 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2 mr-4 cursor-pointer no-underline">
             <div className="bg-primary text-primary-foreground font-bold text-lg px-2 py-1 rounded">
-              SP
+              LO
             </div>
             <span className="font-heading font-bold text-2xl tracking-tight hidden sm:block text-foreground">
-              SmartPrice
+              LesOnline
             </span>
         </Link>
 

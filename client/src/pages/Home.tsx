@@ -93,7 +93,7 @@ export default function Home() {
             <div className="flex w-full items-center rounded-md border border-input bg-background">
               <Input
                 type="text"
-                placeholder="Search products on SmartPrice marketplace..."
+                placeholder="Search products on LesOnline marketplace..."
                 className="border-0 focus-visible:ring-0 shadow-none flex-1"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -144,7 +144,7 @@ export default function Home() {
               {searchQuery ? "Try a different search term." : "Be the first to list your products!"}
             </p>
             <Link href="/auth">
-              <Button data-testid="button-list-products">Start Selling on SmartPrice</Button>
+              <Button data-testid="button-list-products">Start Selling on LesOnline</Button>
             </Link>
           </div>
         ) : (
@@ -195,7 +195,7 @@ export default function Home() {
           </div>
         </div>
         <div className="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-          &copy; 2026 SmartPrice Lesotho. The marketplace with smart pricing for every e-commerce business.
+          &copy; 2026 LesOnline. Lesotho's marketplace with AI-powered pricing — an Alibaba Clone for Lesotho.
         </div>
       </footer>
     </div>

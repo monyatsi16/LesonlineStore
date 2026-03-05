@@ -10,6 +10,7 @@ import { setupAuth } from "./auth";
 import { db } from "./db";
 import { products, orders } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
+import { initializeModel, predict, getMarketInsights, getAllCategoryStats } from "./pricing-model";
 
 /* ================= AUTH HELPER ================= */
 function requireAuth(req: Request, res: Response): number | null {
@@ -20,58 +21,13 @@ function requireAuth(req: Request, res: Response): number | null {
   return req.user.id;
 }
 
-/* ================= AI MODEL ================= */
-function runGradientBoosting(
-  product: Product,
-  demandFactor: number,
-  inventoryFactor: number,
-  competitorFactor: number
-) {
-  let prediction = product.price;
-
-  const demandResidual = (demandFactor - 1) * product.price * 0.5;
-  prediction += demandResidual;
-
-  const inventoryResidual = (1 - inventoryFactor) * product.price * 0.2;
-  prediction += inventoryResidual;
-
-  const competitionResidual = (competitorFactor - 1) * product.price * 0.3;
-  prediction += competitionResidual;
-
-  const confidence = 0.85 + Math.random() * 0.1;
-  const trend =
-    prediction > product.price
-      ? "up"
-      : prediction < product.price
-      ? "down"
-      : "stable";
-
-  const reasons: string[] = [];
-  if (demandResidual > 0)
-    reasons.push(`Demand surge (+${(demandFactor * 100 - 100).toFixed(0)}%)`);
-  if (demandResidual < 0)
-    reasons.push(`Demand decline (${(demandFactor * 100 - 100).toFixed(0)}%)`);
-  if (inventoryResidual > 0)
-    reasons.push(`Low stock pressure (${product.stock} units)`);
-  if (inventoryResidual < 0)
-    reasons.push(`Stock surplus (${product.stock} units)`);
-  if (competitionResidual > 0) reasons.push("Competitor prices rising");
-  if (competitionResidual < 0) reasons.push("Competitor undercutting");
-
-  return {
-    recommendedPrice: Number(prediction.toFixed(2)),
-    confidence: Number(confidence.toFixed(2)),
-    reason: `Gradient Boosting [3 Learners]: ${reasons.join(", ")}.`,
-    trend,
-  };
-}
-
 /* ================= ROUTES ================= */
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   setupAuth(app);
+  initializeModel();
 
   /* ===== PUBLIC MARKETPLACE ===== */
   app.get("/api/marketplace", async (_req, res) => {
@@ -273,13 +229,14 @@ export async function registerRoutes(
     const userId = requireAuth(req, res);
     if (!userId) return;
 
-    const { productId, demandFactor, inventoryFactor, competitorFactor } = req.body;
+    const { productId } = req.body;
 
     const product = await storage.getProduct(Number(productId));
     if (!product || product.userId !== userId)
       return res.status(404).json({ message: "Product not found" });
 
-    const result = runGradientBoosting(product, demandFactor, inventoryFactor, competitorFactor);
+    const orderCount = await storage.getOrderCount(product.id);
+    const result = predict(product, orderCount);
 
     const rec = await storage.createRecommendation({
       userId,
@@ -305,12 +262,7 @@ export async function registerRoutes(
 
     for (const product of userProducts) {
       const orderCount = await storage.getOrderCount(product.id);
-      const demandFactor = orderCount > 10 ? 1.2 : orderCount > 5 ? 1.1 : orderCount > 0 ? 1.0 : 0.85 + Math.random() * 0.3;
-      const inventoryFactor = product.stock > 15 ? 0.7 + Math.random() * 0.3 : product.stock > 5 ? 0.5 + Math.random() * 0.3 : 0.3 + Math.random() * 0.2;
-      const viewToOrderRatio = product.views > 0 ? orderCount / product.views : 0;
-      const competitorFactor = viewToOrderRatio > 0.1 ? 1.05 + Math.random() * 0.1 : 0.9 + Math.random() * 0.15;
-
-      const result = runGradientBoosting(product, demandFactor, inventoryFactor, competitorFactor);
+      const result = predict(product, orderCount);
 
       if (Math.abs(result.recommendedPrice - product.price) / product.price > 0.01) {
         const rec = await storage.createRecommendation({
@@ -329,6 +281,22 @@ export async function registerRoutes(
     }
 
     res.json({ generated: results.length, recommendations: results });
+  });
+
+  /* ===== MARKET INSIGHTS ===== */
+  app.get("/api/market/insights/:category", async (req, res) => {
+    const insights = getMarketInsights(req.params.category);
+    if (!insights) return res.status(404).json({ message: "Category not found" });
+    res.json(insights);
+  });
+
+  app.get("/api/market/categories", async (_req, res) => {
+    const stats = getAllCategoryStats();
+    const result: Record<string, any> = {};
+    for (const [cat, s] of stats) {
+      result[cat] = s;
+    }
+    res.json(result);
   });
 
   return httpServer;

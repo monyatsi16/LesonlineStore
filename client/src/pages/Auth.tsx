@@ -43,7 +43,7 @@ export default function Auth() {
     },
     onSuccess: (user: any) => {
       queryClient.setQueryData(["/api/auth/user"], user);
-      toast({ title: "Account Created!", description: `Welcome to SmartPrice, ${user.name}! Your dashboard is ready.` });
+      toast({ title: "Account Created!", description: `Welcome to LesOnline, ${user.name}! Your dashboard is ready.` });
       setLocation("/dashboard");
     },
     onError: (err: Error) => {
@@ -72,12 +72,12 @@ export default function Auth() {
               <Store className="h-7 w-7 text-primary" />
             </div>
             <CardTitle className="text-2xl font-heading" data-testid="text-auth-title">
-              {isLogin ? "Sign In to SmartPrice" : "Register Your Business"}
+              {isLogin ? "Sign In to LesOnline" : "Register Your Business"}
             </CardTitle>
             <CardDescription>
               {isLogin
-                ? "Access your business dashboard and pricing tools"
-                : "Create an account for your e-commerce business in Lesotho"}
+                ? "Access your dashboard and AI pricing tools"
+                : "Join LesOnline — Lesotho's marketplace with AI-powered pricing"}
             </CardDescription>
           </CardHeader>
           <CardContent>
