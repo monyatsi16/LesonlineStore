@@ -1,7 +1,7 @@
-# LesOnline — Alibaba Clone for Lesotho
+# LesOnline — Smart Marketplace for Lesotho
 
 ## Overview
-A full-stack multi-tenant marketplace AND dynamic pricing platform for e-commerce businesses in Lesotho (Alibaba Clone). Built for LesOnline (lesonline.store). Features 331 real products scraped from the LesOnline store, a real 5-tree Gradient Boosting pricing model trained on Lesotho market data, and full buyer/seller flows. All prices in Lesotho Maloti (LSL/M).
+A full-stack multi-tenant marketplace AND dynamic pricing platform for e-commerce businesses in Lesotho. Built for LesOnline (lesonline.store). Features 331 real products scraped from the LesOnline store, a real 5-tree Gradient Boosting pricing model trained on Lesotho market data, and full buyer/seller flows. All prices in Lesotho Maloti (LSL/M).
 
 ## Tech Stack
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui + Recharts

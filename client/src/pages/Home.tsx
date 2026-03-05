@@ -195,7 +195,7 @@ export default function Home() {
           </div>
         </div>
         <div className="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-          &copy; 2026 LesOnline. Lesotho's marketplace with AI-powered pricing — an Alibaba Clone for Lesotho.
+          &copy; 2026 LesOnline. Lesotho's smart marketplace with AI-powered pricing.
         </div>
       </footer>
     </div>
