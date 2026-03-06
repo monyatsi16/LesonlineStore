@@ -12,13 +12,23 @@ import { products, orders } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { initializeModel, predict, getMarketInsights, getAllCategoryStats } from "./pricing-model";
 
-/* ================= AUTH HELPER ================= */
+/* ================= AUTH HELPERS ================= */
 function requireAuth(req: Request, res: Response): number | null {
   if (!req.isAuthenticated() || !req.user) {
     res.status(401).json({ message: "You must be signed in" });
     return null;
   }
   return req.user.id;
+}
+
+function requireAdmin(req: Request, res: Response): number | null {
+  const userId = requireAuth(req, res);
+  if (!userId) return null;
+  if (req.user?.role !== "admin") {
+    res.status(403).json({ message: "Admin access required" });
+    return null;
+  }
+  return userId;
 }
 
 /* ================= ROUTES ================= */
@@ -297,6 +307,137 @@ export async function registerRoutes(
       result[cat] = s;
     }
     res.json(result);
+  });
+
+  /* ===== ANALYTICS (authenticated users) ===== */
+  app.get("/api/analytics/overview", async (req, res) => {
+    const userId = requireAuth(req, res);
+    if (!userId) return;
+
+    const isAdmin = req.user?.role === "admin";
+
+    const allProducts = isAdmin
+      ? await storage.getAllProducts()
+      : await storage.getProductsByUser(userId);
+
+    const recommendations = await storage.getRecommendationsByUser(userId);
+
+    const stats = getAllCategoryStats();
+    const categoryStatsObj: Record<string, any> = {};
+    stats.forEach((s, cat) => {
+      categoryStatsObj[cat] = s;
+    });
+
+    let ordersByCategory: Record<string, number> = {};
+    let revenueByCategory: Record<string, number> = {};
+
+    if (isAdmin) {
+      const analytics = await storage.getAnalytics();
+      ordersByCategory = analytics.ordersByCategory;
+      revenueByCategory = analytics.revenueByCategory;
+    } else {
+      const sellerOrders = await storage.getOrdersBySeller(userId);
+      for (const order of sellerOrders) {
+        const product = await storage.getProduct(order.productId);
+        if (product) {
+          ordersByCategory[product.category] = (ordersByCategory[product.category] || 0) + 1;
+          revenueByCategory[product.category] = (revenueByCategory[product.category] || 0) + order.totalPrice;
+        }
+      }
+    }
+
+    res.json({
+      categoryStats: categoryStatsObj,
+      products: allProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        category: p.category,
+        stock: p.stock,
+        views: p.views,
+        moq: p.moq,
+      })),
+      recommendations,
+      ordersByCategory,
+      revenueByCategory,
+    });
+  });
+
+  /* ===== ADMIN ROUTES ===== */
+  app.get("/api/admin/stats", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const stats = await storage.getPlatformStats();
+    res.json(stats);
+  });
+
+  app.get("/api/admin/users", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const allUsers = await storage.getAllUsers();
+    res.json(allUsers);
+  });
+
+  app.get("/api/admin/products", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const allProducts = await storage.getAllProducts();
+    res.json(allProducts);
+  });
+
+  app.get("/api/admin/orders", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const allOrders = await storage.getAllOrders();
+    res.json(allOrders);
+  });
+
+  app.delete("/api/admin/products/:id", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const deleted = await storage.deleteProduct(Number(req.params.id));
+    if (!deleted) return res.status(404).json({ message: "Product not found" });
+    res.json({ success: true });
+  });
+
+  app.patch("/api/admin/users/:id/role", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const { role } = req.body;
+    if (!["admin", "retailer"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+    const updated = await storage.updateUserRole(Number(req.params.id), role);
+    if (!updated) return res.status(404).json({ message: "User not found" });
+    const { password, ...safeUser } = updated;
+    res.json(safeUser);
+  });
+
+  app.post("/api/admin/pricing/run-all", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const allProducts = await storage.getAllProducts();
+    const results = [];
+
+    for (const product of allProducts) {
+      const orderCount = await storage.getOrderCount(product.id);
+      const result = predict(product, orderCount);
+
+      if (Math.abs(result.recommendedPrice - product.price) / product.price > 0.01) {
+        const rec = await storage.createRecommendation({
+          userId: product.userId,
+          productId: product.id,
+          productName: product.name,
+          currentPrice: product.price,
+          recommendedPrice: result.recommendedPrice,
+          confidence: result.confidence,
+          reason: result.reason,
+          trend: result.trend,
+        });
+        results.push(rec);
+      }
+    }
+
+    res.json({ generated: results.length, recommendations: results });
+  });
+
+  app.get("/api/admin/analytics", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const analytics = await storage.getAnalytics();
+    res.json(analytics);
   });
 
   return httpServer;

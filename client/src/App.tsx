@@ -6,9 +6,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import ProductDetails from "@/pages/ProductDetails";
 import Cart from "@/pages/Cart";
 import Auth from "@/pages/Auth";
+import Analytics from "@/pages/Analytics";
 import { useAuth } from "@/hooks/useAuth";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -29,14 +31,38 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/auth" />;
+  }
+
+  if (user?.role !== "admin") {
+    return <Redirect to="/dashboard" />;
+  }
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
       <Route path="/cart" component={Cart} />
       <Route path="/product/:id" component={ProductDetails} />
+      <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

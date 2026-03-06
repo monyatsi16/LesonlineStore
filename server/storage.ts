@@ -46,6 +46,17 @@ export interface IStorage {
 
   getSalesDataByUser(userId: number): Promise<SalesData[]>;
   createSalesData(data: InsertSalesData): Promise<SalesData>;
+
+  getAllUsers(): Promise<Omit<User, "password">[]>;
+  getAllOrders(): Promise<Order[]>;
+  deleteProduct(id: number): Promise<boolean>;
+  updateUserRole(id: number, role: string): Promise<User | undefined>;
+  getPlatformStats(): Promise<{ totalUsers: number; totalProducts: number; totalOrders: number; totalRevenue: number }>;
+  getAnalytics(): Promise<{
+    revenueByMonth: { month: string; revenue: number; orders: number }[];
+    ordersByCategory: { category: string; count: number; revenue: number }[];
+    topSellers: { id: number; name: string; businessName: string; products: number; revenue: number }[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -167,6 +178,119 @@ export class DatabaseStorage implements IStorage {
   async createSalesData(data: InsertSalesData): Promise<SalesData> {
     const [created] = await db.insert(salesData).values(data).returning();
     return created;
+  }
+
+  async getAllUsers(): Promise<Omit<User, "password">[]> {
+    const allUsers = await db.select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      businessName: users.businessName,
+      role: users.role,
+    }).from(users);
+    return allUsers;
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const result = await db.delete(products).where(eq(products.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async updateUserRole(id: number, role: string): Promise<User | undefined> {
+    const [updated] = await db.update(users).set({ role }).where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async getPlatformStats(): Promise<{ totalUsers: number; totalProducts: number; totalOrders: number; totalRevenue: number }> {
+    const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const [productCount] = await db.select({ count: sql<number>`count(*)` }).from(products);
+    const [orderCount] = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    const [revenueResult] = await db.select({ total: sql<number>`COALESCE(sum(${orders.totalPrice}), 0)` }).from(orders);
+    return {
+      totalUsers: Number(userCount.count),
+      totalProducts: Number(productCount.count),
+      totalOrders: Number(orderCount.count),
+      totalRevenue: Number(revenueResult.total),
+    };
+  }
+
+  async getAnalytics(): Promise<{
+    revenueByMonth: { month: string; revenue: number; orders: number }[];
+    ordersByCategory: { category: string; count: number; revenue: number }[];
+    topSellers: { id: number; name: string; businessName: string; products: number; revenue: number }[];
+  }> {
+    const monthlyData = await db
+      .select({
+        month: sql<string>`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`,
+        revenue: sql<number>`COALESCE(sum(${orders.totalPrice}), 0)`,
+        orderCount: sql<number>`count(${orders.id})`,
+      })
+      .from(orders)
+      .groupBy(sql`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`)
+      .orderBy(sql`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`);
+
+    const revenueByMonth = monthlyData.map(r => ({
+      month: r.month,
+      revenue: Number(r.revenue),
+      orders: Number(r.orderCount),
+    }));
+
+    const categoryOrders = await db
+      .select({
+        category: products.category,
+        orderCount: sql<number>`count(${orders.id})`,
+        revenue: sql<number>`COALESCE(sum(${orders.totalPrice}), 0)`,
+      })
+      .from(orders)
+      .innerJoin(products, eq(orders.productId, products.id))
+      .groupBy(products.category);
+
+    const ordersByCategory = categoryOrders.map(row => ({
+      category: row.category,
+      count: Number(row.orderCount),
+      revenue: Number(row.revenue),
+    }));
+
+    const sellerStats = await db
+      .select({
+        userId: orders.sellerId,
+        name: users.name,
+        businessName: users.businessName,
+        revenue: sql<number>`COALESCE(sum(${orders.totalPrice}), 0)`,
+        orderCount: sql<number>`count(${orders.id})`,
+      })
+      .from(orders)
+      .innerJoin(users, eq(orders.sellerId, users.id))
+      .groupBy(orders.sellerId, users.name, users.businessName)
+      .orderBy(sql`sum(${orders.totalPrice}) DESC`)
+      .limit(10);
+
+    const productCounts = await db
+      .select({
+        userId: products.userId,
+        count: sql<number>`count(*)`,
+      })
+      .from(products)
+      .groupBy(products.userId);
+
+    const productCountMap: Record<number, number> = {};
+    for (const pc of productCounts) {
+      productCountMap[pc.userId] = Number(pc.count);
+    }
+
+    const topSellers = sellerStats.map(s => ({
+      id: s.userId,
+      name: s.name,
+      businessName: s.businessName,
+      products: productCountMap[s.userId] || 0,
+      revenue: Number(s.revenue),
+    }));
+
+    return { revenueByMonth, ordersByCategory, topSellers };
   }
 }
 

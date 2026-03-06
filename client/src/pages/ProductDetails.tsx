@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, Truck, ShieldCheck, Eye, Package, ArrowRight } from "lucide-react";
+import { Star, Truck, ShieldCheck, Eye, Package, ArrowRight, ShoppingCart } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { addToCart } from "./Cart";
 import type { Product } from "@shared/schema";
 
 interface MarketplaceProduct extends Product {
@@ -168,8 +169,8 @@ export default function ProductDetails() {
               <div className="flex items-start gap-3 text-sm">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-medium block">SmartPrice Verified</span>
-                  <span className="text-muted-foreground">Listed on SmartPrice marketplace</span>
+                  <span className="font-medium block">LesOnline Verified</span>
+                  <span className="text-muted-foreground">Listed on LesOnline marketplace</span>
                 </div>
               </div>
             </div>
@@ -244,6 +245,19 @@ export default function ProductDetails() {
                 >
                   {orderMutation.isPending ? "Placing Order..." : "Place Order"}
                   <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={product.stock === 0}
+                  onClick={() => {
+                    addToCart(product.id, quantity);
+                    toast({ title: "Added to Cart", description: `${product.name} x${quantity} added.` });
+                  }}
+                  data-testid="button-add-to-cart"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Add to Cart
                 </Button>
               </CardContent>
             </Card>

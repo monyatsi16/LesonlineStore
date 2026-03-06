@@ -1,13 +1,38 @@
 import { Link, useLocation } from "wouter";
-import { Search, ShoppingCart, User, Menu, Bell, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingCart, User, LogOut, LayoutDashboard, Shield, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+
+function useCartCount() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      try {
+        const items = JSON.parse(localStorage.getItem("lesonline_cart") || "[]");
+        setCount(items.length);
+      } catch { setCount(0); }
+    };
+    update();
+    window.addEventListener("cart-updated", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("cart-updated", update);
+      window.removeEventListener("storage", update);
+    };
+  }, []);
+
+  return count;
+}
 
 export function Navbar() {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const cartCount = useCartCount();
+  const isAdmin = user?.role === "admin";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
@@ -36,21 +61,52 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-1 ml-auto">
+          <Link href="/cart">
+            <Button variant={location === '/cart' ? 'secondary' : 'ghost'} className="gap-1 relative" data-testid="link-cart">
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden md:inline text-sm">Cart</span>
+              {cartCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]" data-testid="text-cart-count">
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+
           {isAuthenticated && (
-            <Link href="/dashboard">
-              <Button variant={location === '/dashboard' ? 'secondary' : 'ghost'} className="gap-2 hidden md:flex" data-testid="link-dashboard">
-                <LayoutDashboard className="h-4 w-4" />
-                My Dashboard
-              </Button>
-            </Link>
+            <>
+              <Link href="/dashboard">
+                <Button variant={location === '/dashboard' ? 'secondary' : 'ghost'} className="gap-2 hidden md:flex" data-testid="link-dashboard">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Link href="/analytics">
+                <Button variant={location === '/analytics' ? 'secondary' : 'ghost'} className="gap-2 hidden md:flex" data-testid="link-analytics">
+                  <BarChart3 className="h-4 w-4" />
+                  Analytics
+                </Button>
+              </Link>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant={location === '/admin' ? 'secondary' : 'ghost'} className="gap-2 hidden md:flex" data-testid="link-admin">
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
+            </>
           )}
 
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <div className="hidden lg:flex flex-col items-end mr-1">
                 <span className="text-sm font-medium" data-testid="text-user-name">{user?.name}</span>
-                <span className="text-[10px] text-muted-foreground" data-testid="text-business-name">{user?.businessName}</span>
+                <div className="flex items-center gap-1">
+                  {isAdmin && <Badge variant="destructive" className="text-[9px] h-4 px-1">Admin</Badge>}
+                  <span className="text-[10px] text-muted-foreground" data-testid="text-business-name">{user?.businessName}</span>
+                </div>
               </div>
               <Button variant="ghost" className="gap-2" onClick={logout} data-testid="button-logout">
                 <LogOut className="h-5 w-5 text-muted-foreground" />

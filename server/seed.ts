@@ -17,6 +17,21 @@ async function hashPassword(password: string): Promise<string> {
 async function seed() {
   console.log("Starting LesOnline database seed...");
 
+  const existingAdmin = await db.select().from(users).where(eq(users.email, "admin@lesonline.co.ls"));
+  if (existingAdmin.length === 0) {
+    const adminPassword = await hashPassword("LesOnlineAdmin2024!");
+    await db.insert(users).values({
+      email: "admin@lesonline.co.ls",
+      password: adminPassword,
+      name: "LesOnline Admin",
+      businessName: "LesOnline Platform",
+      role: "admin",
+    });
+    console.log("Created admin account (admin@lesonline.co.ls)");
+  } else {
+    console.log("Admin account already exists");
+  }
+
   const existing = await db.select().from(users).where(eq(users.email, "store@lesonline.co.ls"));
   let sellerId: number;
 
