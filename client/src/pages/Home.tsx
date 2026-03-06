@@ -11,7 +11,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, Search, ShoppingCart, Eye, Filter, TrendingUp, ArrowUpDown, Flame, Package, X } from "lucide-react";
+import {
+  Star,
+  Search,
+  ShoppingCart,
+  Eye,
+  Filter,
+  TrendingUp,
+  ArrowUpDown,
+  Flame,
+  Package,
+  X,
+  Truck,
+  Shield,
+  Zap,
+  HeadphonesIcon,
+  Mail,
+  Cpu,
+  MapPin,
+  Phone,
+  Facebook,
+  Instagram,
+  Twitter,
+} from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -35,101 +57,102 @@ const CATEGORY_ICONS: Record<string, string> = {
   "Art": "🎨",
 };
 
-const CATEGORY_COLORS: string[] = [
-  "from-blue-500/10 to-blue-600/5 border-blue-200 hover:border-blue-400",
-  "from-purple-500/10 to-purple-600/5 border-purple-200 hover:border-purple-400",
-  "from-emerald-500/10 to-emerald-600/5 border-emerald-200 hover:border-emerald-400",
-  "from-orange-500/10 to-orange-600/5 border-orange-200 hover:border-orange-400",
-  "from-pink-500/10 to-pink-600/5 border-pink-200 hover:border-pink-400",
-  "from-cyan-500/10 to-cyan-600/5 border-cyan-200 hover:border-cyan-400",
-  "from-amber-500/10 to-amber-600/5 border-amber-200 hover:border-amber-400",
-  "from-red-500/10 to-red-600/5 border-red-200 hover:border-red-400",
-  "from-indigo-500/10 to-indigo-600/5 border-indigo-200 hover:border-indigo-400",
-  "from-teal-500/10 to-teal-600/5 border-teal-200 hover:border-teal-400",
-];
-
 type SortOption = "default" | "price-low" | "price-high" | "popular" | "rating" | "newest";
 
 function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group h-full" data-testid={`card-product-${product.id}`}>
-        <div className="aspect-square bg-slate-50 p-4 relative overflow-hidden">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="h-full w-full object-contain group-hover:scale-105 transition-transform"
-          />
-          {product.stock < 10 && product.stock > 0 && (
-            <Badge variant="destructive" className="absolute top-2 right-2 text-[10px]">Low Stock</Badge>
-          )}
-          {product.stock === 0 && (
-            <Badge variant="secondary" className="absolute top-2 right-2 text-[10px]">Out of Stock</Badge>
-          )}
+      <div className="group cursor-pointer h-full" data-testid={`card-product-${product.id}`}>
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 h-full flex flex-col">
+          <div className="aspect-square bg-gray-50 p-4 relative overflow-hidden">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+            />
+            {product.stock < 10 && product.stock > 0 && (
+              <span className="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                Low Stock
+              </span>
+            )}
+            {product.stock === 0 && (
+              <span className="absolute top-3 left-3 bg-gray-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                Sold Out
+              </span>
+            )}
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Badge variant="secondary" className="bg-[#0E1F6C] text-white text-[9px] border-0">
+                <Cpu className="h-2.5 w-2.5 mr-1" />
+                AI Priced
+              </Badge>
+            </div>
+          </div>
+          <div className="p-4 flex flex-col flex-1">
+            <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-2 min-h-[2.5rem] leading-snug" data-testid={`text-product-name-${product.id}`}>
+              {product.name}
+            </h3>
+            <div className="flex items-center gap-1 mb-3">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`h-3 w-3 ${s <= Math.round(product.rating) ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">({product.reviews})</span>
+            </div>
+            <div className="mt-auto">
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-lg font-bold text-[#0E1F6C]" data-testid={`text-price-${product.id}`}>
+                    M{product.price.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">
+                    MOQ: {product.moq} {product.moq === 1 ? "piece" : "pieces"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                  <Eye className="h-3 w-3" />
+                  {product.views}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-medium text-sm line-clamp-2 mb-2 min-h-[2.5rem]" data-testid={`text-product-name-${product.id}`}>
-            {product.name}
-          </h3>
-          <div className="flex items-center gap-1 mb-2">
-            <Star className="h-3 w-3 fill-orange-400 text-orange-400" />
-            <span className="text-xs font-medium">{product.rating}</span>
-            <span className="text-xs text-muted-foreground">({product.reviews})</span>
-            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-              <Eye className="h-3 w-3" />{product.views}
-            </span>
-          </div>
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="text-lg font-bold text-primary" data-testid={`text-price-${product.id}`}>
-                M{product.price.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                MOQ: {product.moq} {product.moq === 1 ? 'piece' : 'pieces'}
-              </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground text-right">
-              {product.supplier}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
     </Link>
   );
 }
 
-function CategoryCard({
-  category,
+function CollectionCard({
+  title,
   count,
-  colorIndex,
-  isSelected,
+  icon,
   onClick,
-  image,
+  isSelected,
 }: {
-  category: string;
+  title: string;
   count: number;
-  colorIndex: number;
-  isSelected: boolean;
+  icon: string;
   onClick: () => void;
-  image?: string;
+  isSelected: boolean;
 }) {
-  const icon = CATEGORY_ICONS[category] || "📦";
-  const color = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
-
   return (
     <button
       onClick={onClick}
-      className={`flex-shrink-0 w-36 md:w-auto rounded-xl border-2 bg-gradient-to-br p-4 text-left transition-all hover:shadow-md ${color} ${isSelected ? "ring-2 ring-primary ring-offset-2 shadow-md" : ""}`}
-      data-testid={`card-category-${category}`}
+      className={`group flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+        isSelected
+          ? "border-[#0E1F6C] bg-[#0E1F6C]/5 shadow-md"
+          : "border-gray-200 bg-white hover:border-[#0E1F6C]/30"
+      }`}
+      data-testid={`card-category-${title}`}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-2xl">{icon}</span>
-        {image && (
-          <img src={image} alt={category} className="h-8 w-8 rounded object-cover" />
-        )}
+      <span className="text-3xl">{icon}</span>
+      <div className="text-center">
+        <div className="font-semibold text-sm text-gray-900">{title}</div>
+        <div className="text-xs text-gray-500 mt-0.5">{count} {count === 1 ? "product" : "products"}</div>
       </div>
-      <div className="font-semibold text-sm truncate">{category}</div>
-      <div className="text-xs text-muted-foreground">{count} {count === 1 ? "product" : "products"}</div>
     </button>
   );
 }
@@ -139,6 +162,7 @@ export default function Home() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -219,41 +243,96 @@ export default function Home() {
   const hasActiveFilters = selectedCategory || sortBy !== "default" || searchQuery;
 
   return (
-    <div className="min-h-screen bg-background font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans">
       <Navbar />
+
+      <div className="bg-[#0E1F6C] text-white text-center py-2 text-sm" data-testid="announcement-bar">
+        <div className="container mx-auto px-4 flex items-center justify-center gap-2">
+          <Zap className="h-3.5 w-3.5" />
+          <span>Free delivery in Maseru on orders over M500 &bull; AI-Powered Dynamic Pricing</span>
+          <Zap className="h-3.5 w-3.5" />
+        </div>
+      </div>
+
       <Hero />
 
-      <main className="container mx-auto px-4 py-8">
-        <section className="mb-10" data-testid="section-categories">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-heading font-bold flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
-              Browse Categories
-            </h2>
-            <span className="text-sm text-muted-foreground">{categories.length} categories</span>
+      <section className="bg-white border-b border-gray-100" data-testid="section-features">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0E1F6C]/10 flex items-center justify-center">
+                <Truck className="h-5 w-5 text-[#0E1F6C]" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm text-gray-900">Free Delivery</div>
+                <div className="text-xs text-gray-500">Orders over M500</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0E1F6C]/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-[#0E1F6C]" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm text-gray-900">Secure Shopping</div>
+                <div className="text-xs text-gray-500">100% protected</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0E1F6C]/10 flex items-center justify-center">
+                <Cpu className="h-5 w-5 text-[#0E1F6C]" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm text-gray-900">AI-Powered Pricing</div>
+                <div className="text-xs text-gray-500">Smart market prices</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#0E1F6C]/10 flex items-center justify-center">
+                <HeadphonesIcon className="h-5 w-5 text-[#0E1F6C]" />
+              </div>
+              <div>
+                <div className="font-semibold text-sm text-gray-900">24/7 Support</div>
+                <div className="text-xs text-gray-500">Always here to help</div>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin md:grid md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 md:overflow-x-visible">
-            {categories.map((cat, i) => (
-              <CategoryCard
+        </div>
+      </section>
+
+      <main className="container mx-auto px-4 py-10">
+        <section className="mb-12" data-testid="section-categories">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-heading font-bold text-gray-900">Shop by Category</h2>
+            <p className="text-gray-500 mt-2 text-sm">Browse our {categories.length} product categories</p>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            {categories.map((cat) => (
+              <CollectionCard
                 key={cat.name}
-                category={cat.name}
+                title={cat.name}
                 count={cat.count}
-                colorIndex={i}
+                icon={CATEGORY_ICONS[cat.name] || "📦"}
                 isSelected={selectedCategory === cat.name}
                 onClick={() =>
                   setSelectedCategory(selectedCategory === cat.name ? null : cat.name)
                 }
-                image={cat.image}
               />
             ))}
           </div>
         </section>
 
         {!debouncedSearch && !selectedCategory && trendingProducts.length > 0 && (
-          <section className="mb-10" data-testid="section-trending">
-            <div className="flex items-center gap-2 mb-4">
-              <Flame className="h-5 w-5 text-orange-500" />
-              <h2 className="text-xl font-heading font-bold">Trending Now</h2>
+          <section className="mb-12" data-testid="section-trending">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-500" />
+                <h2 className="text-2xl font-heading font-bold text-gray-900">Trending Now</h2>
+              </div>
+              <Link href="#products">
+                <Button variant="ghost" size="sm" className="text-[#0E1F6C] hover:text-[#0E1F6C]/80" data-testid="link-view-all-trending">
+                  View All
+                </Button>
+              </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {trendingProducts.map((product) => (
@@ -266,12 +345,12 @@ export default function Home() {
         <section id="products" data-testid="section-all-products">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
-              <div className="flex w-full items-center rounded-lg border border-input bg-background shadow-sm">
-                <Search className="h-4 w-4 ml-3 text-muted-foreground" />
+              <div className="flex w-full items-center rounded-xl border border-gray-200 bg-white shadow-sm">
+                <Search className="h-4 w-4 ml-3 text-gray-400" />
                 <Input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Search products on LesOnline marketplace..."
+                  placeholder="Search products on LesOnline..."
                   className="border-0 focus-visible:ring-0 shadow-none flex-1"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -295,7 +374,7 @@ export default function Home() {
             </div>
             <div className="flex gap-2">
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-[180px]" data-testid="select-sort">
+                <SelectTrigger className="w-[180px] rounded-xl" data-testid="select-sort">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
@@ -309,7 +388,7 @@ export default function Home() {
                 </SelectContent>
               </Select>
               {hasActiveFilters && (
-                <Button variant="outline" size="sm" onClick={clearFilters} className="h-10" data-testid="button-clear-filters">
+                <Button variant="outline" size="sm" onClick={clearFilters} className="h-10 rounded-xl" data-testid="button-clear-filters">
                   <X className="h-4 w-4 mr-1" />
                   Clear
                 </Button>
@@ -318,10 +397,11 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Filter className="h-4 w-4 text-gray-400" />
             <Button
               variant={selectedCategory === null ? "default" : "outline"}
               size="sm"
+              className={`rounded-full ${selectedCategory === null ? "bg-[#0E1F6C] hover:bg-[#0E1F6C]/90" : ""}`}
               onClick={() => setSelectedCategory(null)}
               data-testid="button-category-all"
             >
@@ -332,6 +412,7 @@ export default function Home() {
                 key={cat.name}
                 variant={selectedCategory === cat.name ? "default" : "outline"}
                 size="sm"
+                className={`rounded-full ${selectedCategory === cat.name ? "bg-[#0E1F6C] hover:bg-[#0E1F6C]/90" : ""}`}
                 onClick={() => setSelectedCategory(selectedCategory === cat.name ? null : cat.name)}
                 data-testid={`button-category-${cat.name}`}
               >
@@ -340,31 +421,31 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-heading font-bold" data-testid="text-products-heading">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-heading font-bold text-gray-900" data-testid="text-products-heading">
               {debouncedSearch
                 ? `Results for "${debouncedSearch}"`
                 : selectedCategory || "All Products"}
             </h2>
-            <span className="text-sm text-muted-foreground" data-testid="text-product-count">
+            <span className="text-sm text-gray-500" data-testid="text-product-count">
               {filteredAndSorted.length} products
             </span>
           </div>
 
           {filteredAndSorted.length === 0 ? (
-            <div className="text-center py-16">
-              <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-4">
+            <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+              <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+              <p className="text-gray-500 mb-6">
                 {searchQuery
                   ? "Try a different search term or clear the filters."
                   : "Be the first to list your products!"}
               </p>
               {hasActiveFilters ? (
-                <Button onClick={clearFilters} data-testid="button-reset-filters">Reset Filters</Button>
+                <Button onClick={clearFilters} className="bg-[#0E1F6C] hover:bg-[#0E1F6C]/90" data-testid="button-reset-filters">Reset Filters</Button>
               ) : (
                 <Link href="/auth">
-                  <Button data-testid="button-list-products">Start Selling on LesOnline</Button>
+                  <Button className="bg-[#0E1F6C] hover:bg-[#0E1F6C]/90" data-testid="button-list-products">Start Selling on LesOnline</Button>
                 </Link>
               )}
             </div>
@@ -378,46 +459,95 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-slate-900 text-slate-300 py-12 mt-12 border-t border-slate-800">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div>
-            <h4 className="font-bold text-white mb-4">Marketplace</h4>
-            <ul className="space-y-2 text-sm">
-              <li>Browse Products</li>
-              <li>Categories</li>
-              <li>Top Sellers</li>
-              <li>New Arrivals</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">For Sellers</h4>
-            <ul className="space-y-2 text-sm">
-              <li>Start Selling</li>
-              <li>Pricing Tools</li>
-              <li>Seller Dashboard</li>
-              <li>Order Management</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">Smart Pricing</h4>
-            <ul className="space-y-2 text-sm">
-              <li>How It Works</li>
-              <li>Gradient Boosting</li>
-              <li>Market Analytics</li>
-              <li>Case Studies</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">Contact</h4>
-            <ul className="space-y-2 text-sm">
-              <li>Support</li>
-              <li>Partnerships</li>
-              <li>Feedback</li>
-            </ul>
+      <section className="bg-[#0E1F6C] text-white py-16" data-testid="section-newsletter">
+        <div className="container mx-auto px-4 text-center max-w-xl">
+          <Mail className="h-10 w-10 mx-auto mb-4 opacity-80" />
+          <h2 className="text-2xl font-heading font-bold mb-3">Stay Updated</h2>
+          <p className="text-white/70 mb-6 text-sm">
+            Subscribe to get notified about new products, deals, and AI pricing insights.
+          </p>
+          <div className="flex gap-2 max-w-md mx-auto">
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl flex-1"
+              data-testid="input-newsletter-email"
+            />
+            <Button className="bg-white text-[#0E1F6C] hover:bg-white/90 rounded-xl px-6 font-semibold" data-testid="button-newsletter-subscribe">
+              Subscribe
+            </Button>
           </div>
         </div>
-        <div className="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-          &copy; 2026 LesOnline. Lesotho's smart marketplace with AI-powered pricing.
+      </section>
+
+      <footer className="bg-[#0a1545] text-gray-300" data-testid="footer">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <h4 className="font-heading font-bold text-white text-lg mb-4">LesOnline</h4>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Lesotho's smart online marketplace with AI-powered dynamic pricing for fair, competitive shopping.
+              </p>
+              <div className="flex gap-3">
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" data-testid="link-social-facebook">
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" data-testid="link-social-instagram">
+                  <Instagram className="h-4 w-4" />
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" data-testid="link-social-twitter">
+                  <Twitter className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Marketplace</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li className="hover:text-white transition-colors cursor-pointer">Browse Products</li>
+                <li className="hover:text-white transition-colors cursor-pointer">Categories</li>
+                <li className="hover:text-white transition-colors cursor-pointer">Top Sellers</li>
+                <li className="hover:text-white transition-colors cursor-pointer">New Arrivals</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Smart Pricing</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li className="hover:text-white transition-colors cursor-pointer flex items-center gap-1.5">
+                  <Cpu className="h-3 w-3 text-[#4a7dff]" /> How It Works
+                </li>
+                <li className="hover:text-white transition-colors cursor-pointer">Gradient Boosting</li>
+                <li className="hover:text-white transition-colors cursor-pointer">Market Analytics</li>
+                <li className="hover:text-white transition-colors cursor-pointer">Seller Dashboard</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Contact</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                  Maseru, Lesotho
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-gray-500" />
+                  +266 2231 0000
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-gray-500" />
+                  hello@lesonline.store
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10">
+          <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
+            <span>&copy; 2026 LesOnline. All rights reserved.</span>
+            <span className="mt-2 md:mt-0 flex items-center gap-1.5">
+              Powered by <Cpu className="h-3 w-3 text-[#4a7dff]" /> AI Dynamic Pricing
+            </span>
+          </div>
         </div>
       </footer>
     </div>

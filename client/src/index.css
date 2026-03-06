@@ -6,8 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-heading: 'Barlow', sans-serif;
+  --font-sans: 'Questrial', 'Inter', sans-serif;
+  --font-heading: 'Archivo', 'Barlow', sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -87,11 +87,11 @@
   --popover-foreground: 222 47% 11%;
   --popover-border: 214.3 31.8% 91.4%;
 
-  --primary: 25 95% 53%;
+  --primary: 230 77% 23%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 215 25% 27%;
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 230 40% 92%;
+  --secondary-foreground: 230 77% 23%;
 
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
@@ -104,12 +104,12 @@
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 25 95% 53%;
+  --ring: 230 77% 23%;
 
   --radius: 0.5rem;
 
-  --chart-1: 25 95% 53%;
-  --chart-2: 215 25% 27%;
+  --chart-1: 230 77% 23%;
+  --chart-2: 200 60% 45%;
   --chart-3: 142 71% 45%;
   --chart-4: 48 96% 53%;
   --chart-5: 0 84% 60%;
@@ -174,7 +174,7 @@
   --popover-foreground: 210 40% 98%;
   --popover-border: 217.2 32.6% 17.5%;
 
-  --primary: 25 95% 53%;
+  --primary: 230 70% 50%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 217.2 32.6% 17.5%;
@@ -191,9 +191,9 @@
 
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 25%;
-  --ring: 25 95% 53%;
+  --ring: 230 70% 50%;
 
-  --chart-1: 220 70% 50%;
+  --chart-1: 230 70% 50%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
