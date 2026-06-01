@@ -26,6 +26,7 @@ Steps
    - Railway will detect the project. Ensure the build command is `npm ci && npm run build` and the start command is `npm run start`.
    - Make sure the service uses `PUPPETEER_SKIP_DOWNLOAD=true` during install/build to keep Puppeteer from downloading Chrome in the build environment.
    - Alternatively, Railway can use the included `Dockerfile`.
+   - If you cannot add `RAILWAY_API_KEY` as a GitHub secret, connect the repository directly through Railway's GitHub integration and deploy from the Railway dashboard.
 
 4. Database
    - Create a Neon or Railway Postgres database and copy the `DATABASE_URL` to Railway variables.

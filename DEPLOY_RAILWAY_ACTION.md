@@ -11,6 +11,16 @@ What you must do:
 2. In the GitHub repo settings (Secrets -> Actions), add `RAILWAY_API_KEY` with that value
 3. Push to `main` to trigger the workflow
 
+Alternative manual Railway deploy (no GitHub secret required):
+1. Open Railway and create a new project.
+2. Choose "Deploy from GitHub" and connect the repository `monyatsi16/LesonlineStore`.
+3. Set the Railway environment variables:
+   - `DATABASE_URL` = your Postgres connection string
+   - `NODE_ENV` = `production`
+   - `PRICING_INTERVAL_MS` = `900000`
+   - `COMPETITOR_SCRAPING` = `false`
+4. Save the project and start deploy from Railway.
+
 Notes:
 - The action requires the Railway API key with permissions to create/update projects. If you prefer to connect Railway via OAuth in the Railway console, you can skip adding the key and instead connect the repo manually in Railway.
 - For a safe free-tier deployment, set these env vars in Railway:
