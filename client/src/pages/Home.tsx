@@ -24,7 +24,6 @@ import {
   X,
   Truck,
   Shield,
-  Zap,
   HeadphonesIcon,
   Mail,
   Cpu,
@@ -33,33 +32,88 @@ import {
   Facebook,
   Instagram,
   Twitter,
+  ExternalLink,
+  Sparkles,
+  Tag,
+  Globe,
+  Clock3,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import type { Product } from "@shared/schema";
+import { addToCart } from "./Cart";
+
+type SmartSearchResult = {
+  query: string;
+  totalFound: number;
+  products: Product[];
+  suggestedCategories: { name: string; count: number }[];
+  relatedTerms: string[];
+  externalLinks: { name: string; url: string; icon: string }[];
+  showExternal: boolean;
+};
+
+type InternetSearchResult = {
+  query: string;
+  totalFound: number;
+  items: Array<{
+    source: "takealot" | "amazon" | "makro" | "game" | "shoprite";
+    title: string;
+    price: number;
+    url: string;
+    relevance: number;
+  }>;
+};
+
+const EXTERNAL_COLORS: Record<string, string> = {
+  takealot: "bg-blue-600 hover:bg-blue-700",
+  amazon: "bg-amber-500 hover:bg-amber-600",
+  makro: "bg-red-600 hover:bg-red-700",
+  game: "bg-green-600 hover:bg-green-700",
+};
 
 const CATEGORY_ICONS: Record<string, string> = {
-  "Electronics": "⚡",
-  "Clothing": "👕",
-  "Home & Garden": "🏡",
-  "Sports": "⚽",
-  "Beauty": "💄",
-  "Automotive": "🚗",
-  "Books": "📚",
-  "Food & Beverages": "🍔",
-  "Health": "💊",
-  "Toys": "🧸",
-  "Office": "🖥️",
-  "Jewelry": "💍",
-  "Pet Supplies": "🐾",
-  "Music": "🎵",
-  "Art": "🎨",
+  "Built-in Hobs": "🔥",
+  "Built-in Ovens": "♨️",
+  "Microwaves": "📡",
+  "Stoves": "🍳",
+  "Gas Cooktops": "🔥",
+  "Range Hoods": "💨",
+  "Kitchen Sinks & Mixers": "🚰",
+  "Dishwashers & Washing Machines": "🫧",
+  "Fridge & Freezer": "❄️",
+  "Refrigerators": "🧊",
+  "Ovens": "🔲",
+  "Fireplaces": "🪵",
+  "Geysers": "🌡️",
+  "Bathroom": "🚿",
+  "Chairs": "🪑",
+  "Men's Casual Shoes": "👞",
+  "Men's Shoes": "👟",
+  "Phones": "📱",
 };
 
 type SortOption = "default" | "price-low" | "price-high" | "popular" | "rating" | "newest";
 
 function ProductCard({ product }: { product: Product }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const isAdminOrSeller = user?.role === "admin" || user?.role === "seller";
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (product.stock === 0) return;
+    addToCart(product.id, 1);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} added to your cart`,
+    });
+  };
+
   return (
     <Link href={`/product/${product.id}`}>
       <div className="group cursor-pointer h-full" data-testid={`card-product-${product.id}`}>
@@ -70,7 +124,7 @@ function ProductCard({ product }: { product: Product }) {
               alt={product.name}
               className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
-            {product.stock < 10 && product.stock > 0 && (
+            {isAdminOrSeller && product.stock < 10 && product.stock > 0 && (
               <span className="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
                 Low Stock
               </span>
@@ -80,17 +134,24 @@ function ProductCard({ product }: { product: Product }) {
                 Sold Out
               </span>
             )}
-            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Badge variant="secondary" className="bg-[#0E1F6C] text-white text-[9px] border-0">
-                <Cpu className="h-2.5 w-2.5 mr-1" />
-                AI Priced
-              </Badge>
-            </div>
+            {isAdminOrSeller && (
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Badge variant="secondary" className="bg-[#0E1F6C] text-white text-[9px] border-0">
+                  <Cpu className="h-2.5 w-2.5 mr-1" />
+                  AI Priced
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="p-4 flex flex-col flex-1">
             <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-2 min-h-[2.5rem] leading-snug" data-testid={`text-product-name-${product.id}`}>
               {product.name}
             </h3>
+            <div className="flex items-center gap-1 mb-2">
+              <Badge variant="outline" className="text-[10px] text-gray-500 border-gray-200 font-normal">
+                {product.category}
+              </Badge>
+            </div>
             <div className="flex items-center gap-1 mb-3">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((s) => (
@@ -103,13 +164,20 @@ function ProductCard({ product }: { product: Product }) {
               <span className="text-xs text-gray-500">({product.reviews})</span>
             </div>
             <div className="mt-auto">
-              <div className="flex items-end justify-between">
+              <div className="flex items-end justify-between mb-3">
                 <div>
                   <div className="text-lg font-bold text-[#0E1F6C]" data-testid={`text-price-${product.id}`}>
-                    M{product.price.toLocaleString()}
+                    {typeof product.recommendedPrice === "number" && product.recommendedPrice !== product.price ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400 line-through">M{product.price.toLocaleString()}</span>
+                        <span className="font-bold text-[#0E1F6C]">M{product.recommendedPrice.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      `M${product.price.toLocaleString()}`
+                    )}
                   </div>
                   <div className="text-[10px] text-gray-400 mt-0.5">
-                    MOQ: {product.moq} {product.moq === 1 ? "piece" : "pieces"}
+                    {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-[10px] text-gray-400">
@@ -117,6 +185,20 @@ function ProductCard({ product }: { product: Product }) {
                   {product.views}
                 </div>
               </div>
+              <Button
+                size="sm"
+                className={`w-full rounded-lg text-xs font-semibold ${
+                  product.stock === 0
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#0E1F6C] hover:bg-[#0E1F6C]/90 text-white"
+                }`}
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                data-testid={`button-add-to-cart-${product.id}`}
+              >
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+              </Button>
             </div>
           </div>
         </div>
@@ -158,11 +240,14 @@ function CollectionCard({
 }
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("default");
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [quickTrackOrderId, setQuickTrackOrderId] = useState("");
+  const [quickTrackEmail, setQuickTrackEmail] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -170,18 +255,75 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: allProducts = [] } = useQuery<Product[]>({
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get("category");
+    const search = params.get("search");
+    if (cat) {
+      setSelectedCategory(cat);
+      setTimeout(() => {
+        document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+    if (search) {
+      setSearchQuery(search);
+      setTimeout(() => {
+        document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const category = (e as CustomEvent).detail as string;
+      setSelectedCategory(category);
+      document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+    };
+    window.addEventListener("select-category", handler);
+    return () => window.removeEventListener("select-category", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const query = (e as CustomEvent).detail as string;
+      setSearchQuery(query);
+      setSelectedCategory(null);
+      setTimeout(() => {
+        document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    };
+    window.addEventListener("navbar-search", handler);
+    return () => window.removeEventListener("navbar-search", handler);
+  }, []);
+
+  const { data: allProducts = [] } = useQuery<Array<Product & { recommendedPrice?: number; recommendedTrend?: string }>>({
     queryKey: ["/api/marketplace"],
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: searchResults } = useQuery<Product[]>({
-    queryKey: ["/api/marketplace/search", debouncedSearch],
+  const { data: smartSearch } = useQuery<SmartSearchResult>({
+    queryKey: ["/api/marketplace/smart-search", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch(`/api/marketplace/search?q=${encodeURIComponent(debouncedSearch)}`);
+      const res = await fetch(`/api/marketplace/smart-search?q=${encodeURIComponent(debouncedSearch)}`);
+      if (!res.ok) throw new Error("Search failed");
       return res.json();
     },
-    enabled: debouncedSearch.length > 0,
+    enabled: debouncedSearch.length > 1,
   });
+
+  const { data: internetSearch } = useQuery<InternetSearchResult>({
+    queryKey: ["/api/marketplace/internet-search", debouncedSearch],
+    queryFn: async () => {
+      const res = await fetch(`/api/marketplace/internet-search?q=${encodeURIComponent(debouncedSearch)}&limit=16`);
+      if (!res.ok) throw new Error("Internet search failed");
+      return res.json();
+    },
+    enabled: debouncedSearch.length > 1,
+  });
+
+  const searchResults = smartSearch?.products;
 
   const categories = useMemo(() => {
     const catMap = new Map<string, { count: number; image?: string }>();
@@ -238,6 +380,7 @@ export default function Home() {
     setSelectedCategory(null);
     setSortBy("default");
     setSearchQuery("");
+    window.history.pushState({}, "", "/");
   };
 
   const hasActiveFilters = selectedCategory || sortBy !== "default" || searchQuery;
@@ -245,14 +388,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Navbar />
-
-      <div className="bg-[#0E1F6C] text-white text-center py-2 text-sm" data-testid="announcement-bar">
-        <div className="container mx-auto px-4 flex items-center justify-center gap-2">
-          <Zap className="h-3.5 w-3.5" />
-          <span>Free delivery in Maseru on orders over M500 &bull; AI-Powered Dynamic Pricing</span>
-          <Zap className="h-3.5 w-3.5" />
-        </div>
-      </div>
 
       <Hero />
 
@@ -294,6 +429,50 @@ export default function Home() {
                 <div className="font-semibold text-sm text-gray-900">24/7 Support</div>
                 <div className="text-xs text-gray-500">Always here to help</div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gradient-to-r from-[#0E1F6C] to-[#12317f] text-white" data-testid="section-quick-track">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid md:grid-cols-[1fr,auto] gap-4 items-center">
+            <div>
+              <h2 className="font-heading font-bold text-xl flex items-center gap-2">
+                <Clock3 className="h-5 w-5" />
+                Track Your Delivery Checkpoint
+              </h2>
+              <p className="text-white/80 text-sm mt-1">Enter your order number and checkout email to view live order progress.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                placeholder="Order #"
+                value={quickTrackOrderId}
+                onChange={(e) => setQuickTrackOrderId(e.target.value)}
+                className="bg-white text-black border-white/20 min-w-[120px]"
+                data-testid="input-home-quick-track-order-id"
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={quickTrackEmail}
+                onChange={(e) => setQuickTrackEmail(e.target.value)}
+                className="bg-white text-black border-white/20 min-w-[220px]"
+                data-testid="input-home-quick-track-email"
+              />
+              <Button
+                onClick={() =>
+                  setLocation(`/track?orderId=${encodeURIComponent(quickTrackOrderId)}&email=${encodeURIComponent(quickTrackEmail)}`)
+                }
+                className="bg-[#c45e72] hover:bg-[#c45e72]/90 text-white"
+                disabled={!quickTrackOrderId.trim() || !quickTrackEmail.trim()}
+                data-testid="button-home-quick-track"
+              >
+                Track Now
+              </Button>
+              <Button asChild variant="outline" className="border-white/40 text-white hover:bg-white/10 hover:text-white" data-testid="button-home-order-history">
+                <Link href="/orders">Order History</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -432,6 +611,116 @@ export default function Home() {
             </span>
           </div>
 
+          {/* ── Smart Search Panel ─────────────────────────────── */}
+          {debouncedSearch && smartSearch && (
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              {/* External marketplaces */}
+              {(smartSearch.showExternal || smartSearch.totalFound === 0) && (
+                <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {smartSearch.totalFound === 0
+                      ? "Not found locally – search on"
+                      : "Also search on"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {smartSearch.externalLinks.map((link) => (
+                      <a
+                        key={link.name}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-medium transition-colors ${EXTERNAL_COLORS[link.icon] ?? "bg-gray-700 hover:bg-gray-800"}`}
+                      >
+                        {link.name}
+                        <ExternalLink className="h-3 w-3 opacity-70" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Internet result cards */}
+              {internetSearch && internetSearch.totalFound > 0 && (
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <Globe className="h-3.5 w-3.5" />
+                    Internet results ({internetSearch.totalFound})
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {internetSearch.items.slice(0, 8).map((item, index) => (
+                      <a
+                        key={`${item.url}-${index}`}
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="border border-gray-200 rounded-lg p-3 hover:border-[#0E1F6C]/40 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                            {item.source}
+                          </Badge>
+                          <span className="text-xs font-semibold text-[#0E1F6C]">M{Math.round(item.price).toLocaleString()}</span>
+                        </div>
+                        <p className="text-xs text-gray-800 line-clamp-2 mb-1">{item.title}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500">Relevance {Math.round(item.relevance)}%</span>
+                          <span className="text-[10px] text-[#0E1F6C] inline-flex items-center gap-1">
+                            Open <ExternalLink className="h-3 w-3" />
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Related terms */}
+              {smartSearch.relatedTerms.length > 0 && (
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Related searches
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {smartSearch.relatedTerms.map((term) => (
+                      <button
+                        key={term}
+                        onClick={() => { setSearchQuery(term); setSelectedCategory(null); }}
+                        className="px-2.5 py-1 rounded-full border border-gray-200 text-xs text-gray-700 hover:border-[#0E1F6C] hover:text-[#0E1F6C] transition-colors"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested categories */}
+              {smartSearch.suggestedCategories.length > 0 && (
+                <div className="px-4 py-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <Tag className="h-3.5 w-3.5" />
+                    In categories
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {smartSearch.suggestedCategories.map((cat) => (
+                      <button
+                        key={cat.name}
+                        onClick={() => { setSelectedCategory(cat.name); setSearchQuery(""); }}
+                        className="px-2.5 py-1 rounded-full border border-gray-200 text-xs text-gray-700 hover:border-[#0E1F6C] hover:text-[#0E1F6C] transition-colors"
+                      >
+                        {CATEGORY_ICONS[cat.name] || "📦"} {cat.name} <span className="text-gray-400">({cat.count})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* ── End Smart Search Panel ─────────────────────────── */}
+
           {filteredAndSorted.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
               <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -519,7 +808,6 @@ export default function Home() {
                 </li>
                 <li className="hover:text-white transition-colors cursor-pointer">Gradient Boosting</li>
                 <li className="hover:text-white transition-colors cursor-pointer">Market Analytics</li>
-                <li className="hover:text-white transition-colors cursor-pointer">Seller Dashboard</li>
               </ul>
             </div>
             <div>

@@ -6,6 +6,7 @@ import {
   orders,
   priceRecommendations,
   salesData,
+  priceUpdateLogs,
   type User,
   type InsertUser,
   type Product,
@@ -16,6 +17,8 @@ import {
   type InsertRecommendation,
   type SalesData,
   type InsertSalesData,
+  type PriceUpdateLog,
+  type InsertPriceUpdateLog,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -35,14 +38,22 @@ export interface IStorage {
   getProductsByCategory(category: string): Promise<Product[]>;
 
   createOrder(order: InsertOrder): Promise<Order>;
+  getOrderById(id: number): Promise<Order | undefined>;
+  getOrderByIdAndEmail(id: number, email: string): Promise<Order | undefined>;
+  getOrdersByBuyerEmail(email: string): Promise<Order[]>;
   getOrdersBySeller(sellerId: number): Promise<Order[]>;
   getOrdersByProduct(productId: number): Promise<Order[]>;
   updateOrderStatus(id: number, sellerId: number, status: string): Promise<Order | undefined>;
+  updateOrderStatusAdmin(id: number, status: string): Promise<Order | undefined>;
+  appendOrderTracking(id: number, event: { status: string; label: string; timestamp: string; note?: string }): Promise<Order | undefined>;
   getOrderCount(productId: number): Promise<number>;
 
   getRecommendationsByUser(userId: number): Promise<PriceRecommendation[]>;
+  getAllRecommendations(): Promise<PriceRecommendation[]>;
   createRecommendation(rec: InsertRecommendation): Promise<PriceRecommendation>;
+  deleteRecommendation(id: number): Promise<boolean>;
   deleteRecommendationByUser(id: number, userId: number): Promise<boolean>;
+  deleteAllRecommendations(): Promise<number>;
 
   getSalesDataByUser(userId: number): Promise<SalesData[]>;
   createSalesData(data: InsertSalesData): Promise<SalesData>;
@@ -50,6 +61,7 @@ export interface IStorage {
   getAllUsers(): Promise<Omit<User, "password">[]>;
   getAllOrders(): Promise<Order[]>;
   deleteProduct(id: number): Promise<boolean>;
+  deleteUser(id: number): Promise<boolean>;
   updateUserRole(id: number, role: string): Promise<User | undefined>;
   getPlatformStats(): Promise<{ totalUsers: number; totalProducts: number; totalOrders: number; totalRevenue: number }>;
   getAnalytics(): Promise<{
@@ -57,6 +69,12 @@ export interface IStorage {
     ordersByCategory: { category: string; count: number; revenue: number }[];
     topSellers: { id: number; name: string; businessName: string; products: number; revenue: number }[];
   }>;
+
+  createPriceUpdateLog(log: InsertPriceUpdateLog): Promise<PriceUpdateLog>;
+  getLatestPriceUpdateLog(): Promise<PriceUpdateLog | undefined>;
+  getPriceUpdateLogs(limit?: number): Promise<PriceUpdateLog[]>;
+  deletePriceUpdateLog(id: number): Promise<boolean>;
+  deleteAllPriceUpdateLogs(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -121,9 +139,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    return await db.select().from(products).where(
-      sql`LOWER(${products.name}) LIKE ${'%' + query.toLowerCase() + '%'} OR LOWER(${products.category}) LIKE ${'%' + query.toLowerCase() + '%'}`
+    const q = query.toLowerCase().trim();
+    const terms = q.split(/\s+/).filter(Boolean);
+
+    // Fetch all candidates that match any term in name, description, category or supplier
+    const rows = await db.select().from(products).where(
+      sql`(${sql.join(
+        terms.map(
+          (t) =>
+            sql`(LOWER(${products.name}) LIKE ${'%' + t + '%'} OR LOWER(${products.category}) LIKE ${'%' + t + '%'} OR LOWER(${products.description}) LIKE ${'%' + t + '%'} OR LOWER(${products.supplier}) LIKE ${'%' + t + '%'})`
+        ),
+        sql` OR `
+      )})`
     );
+
+    // Score each result: exact name match > all terms present > partial matches, boosted by popularity
+    const scored = rows.map((p) => {
+      const name = p.name.toLowerCase();
+      const cat = p.category.toLowerCase();
+      let score = 0;
+      if (name === q) score += 100;
+      if (name.startsWith(q)) score += 50;
+      if (name.includes(q)) score += 30;
+      if (cat.includes(q)) score += 20;
+      const matchedTerms = terms.filter((t) => name.includes(t) || cat.includes(t));
+      score += matchedTerms.length * 10;
+      // popularity boost (capped)
+      score += Math.min(p.views / 50, 5);
+      score += Math.min(p.rating * 2, 10);
+      return { product: p, score };
+    });
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .map((s) => s.product);
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
@@ -133,6 +182,27 @@ export class DatabaseStorage implements IStorage {
   async createOrder(order: InsertOrder): Promise<Order> {
     const [created] = await db.insert(orders).values(order).returning();
     return created;
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async getOrderByIdAndEmail(id: number, email: string): Promise<Order | undefined> {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, id), sql`LOWER(${orders.buyerEmail}) = LOWER(${email})`));
+    return order;
+  }
+
+  async getOrdersByBuyerEmail(email: string): Promise<Order[]> {
+    return await db
+      .select()
+      .from(orders)
+      .where(sql`LOWER(${orders.buyerEmail}) = LOWER(${email})`)
+      .orderBy(desc(orders.createdAt));
   }
 
   async getOrdersBySeller(sellerId: number): Promise<Order[]> {
@@ -152,6 +222,27 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async updateOrderStatusAdmin(id: number, status: string): Promise<Order | undefined> {
+    const [updated] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async appendOrderTracking(id: number, event: { status: string; label: string; timestamp: string; note?: string }): Promise<Order | undefined> {
+    const existing = await this.getOrderById(id);
+    if (!existing) return undefined;
+    const history = Array.isArray(existing.trackingHistory) ? [...existing.trackingHistory, event] : [event];
+    const [updated] = await db
+      .update(orders)
+      .set({ trackingHistory: history, status: event.status })
+      .where(eq(orders.id, id))
+      .returning();
+    return updated;
+  }
+
   async getOrderCount(productId: number): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` }).from(orders).where(eq(orders.productId, productId));
     return Number(result[0]?.count || 0);
@@ -161,14 +252,28 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(priceRecommendations).where(eq(priceRecommendations.userId, userId));
   }
 
+  async getAllRecommendations(): Promise<PriceRecommendation[]> {
+    return await db.select().from(priceRecommendations).orderBy(desc(priceRecommendations.createdAt));
+  }
+
   async createRecommendation(rec: InsertRecommendation): Promise<PriceRecommendation> {
     const [created] = await db.insert(priceRecommendations).values(rec).returning();
     return created;
   }
 
+  async deleteRecommendation(id: number): Promise<boolean> {
+    const result = await db.delete(priceRecommendations).where(eq(priceRecommendations.id, id)).returning();
+    return result.length > 0;
+  }
+
   async deleteRecommendationByUser(id: number, userId: number): Promise<boolean> {
     const result = await db.delete(priceRecommendations).where(and(eq(priceRecommendations.id, id), eq(priceRecommendations.userId, userId))).returning();
     return result.length > 0;
+  }
+
+  async deleteAllRecommendations(): Promise<number> {
+    const result = await db.delete(priceRecommendations).returning();
+    return result.length;
   }
 
   async getSalesDataByUser(userId: number): Promise<SalesData[]> {
@@ -197,6 +302,12 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: number): Promise<boolean> {
     const result = await db.delete(products).where(eq(products.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    await db.delete(products).where(eq(products.userId, id));
+    const result = await db.delete(users).where(eq(users.id, id)).returning();
     return result.length > 0;
   }
 
@@ -291,6 +402,30 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return { revenueByMonth, ordersByCategory, topSellers };
+  }
+
+  async createPriceUpdateLog(log: InsertPriceUpdateLog): Promise<PriceUpdateLog> {
+    const [created] = await db.insert(priceUpdateLogs).values(log).returning();
+    return created;
+  }
+
+  async getLatestPriceUpdateLog(): Promise<PriceUpdateLog | undefined> {
+    const [latest] = await db.select().from(priceUpdateLogs).orderBy(desc(priceUpdateLogs.runAt)).limit(1);
+    return latest;
+  }
+
+  async getPriceUpdateLogs(limit: number = 10): Promise<PriceUpdateLog[]> {
+    return await db.select().from(priceUpdateLogs).orderBy(desc(priceUpdateLogs.runAt)).limit(limit);
+  }
+
+  async deletePriceUpdateLog(id: number): Promise<boolean> {
+    const result = await db.delete(priceUpdateLogs).where(eq(priceUpdateLogs.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async deleteAllPriceUpdateLogs(): Promise<number> {
+    const result = await db.delete(priceUpdateLogs).returning();
+    return result.length;
   }
 }
 

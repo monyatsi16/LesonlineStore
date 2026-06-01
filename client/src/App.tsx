@@ -11,7 +11,29 @@ import ProductDetails from "@/pages/ProductDetails";
 import Cart from "@/pages/Cart";
 import Auth from "@/pages/Auth";
 import Analytics from "@/pages/Analytics";
+import OrderConfirmation from "@/pages/OrderConfirmation";
+import TrackOrder from "@/pages/TrackOrder";
+import OrderHistory from "@/pages/OrderHistory";
+import PriceSync from "@/components/PriceSync";
 import { useAuth } from "@/hooks/useAuth";
+
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== "admin") {
+    return <Redirect to="/auth" />;
+  }
+
+  return <Component />;
+}
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,28 +53,6 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
-function AdminRoute({ component: Component }: { component: React.ComponentType }) {
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Redirect to="/auth" />;
-  }
-
-  if (user?.role !== "admin") {
-    return <Redirect to="/dashboard" />;
-  }
-
-  return <Component />;
-}
-
 function Router() {
   return (
     <Switch>
@@ -61,6 +61,9 @@ function Router() {
       <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
       <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
       <Route path="/cart" component={Cart} />
+      <Route path="/order-confirmed" component={OrderConfirmation} />
+      <Route path="/track" component={TrackOrder} />
+      <Route path="/orders" component={OrderHistory} />
       <Route path="/product/:id" component={ProductDetails} />
       <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
       <Route component={NotFound} />
@@ -71,6 +74,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <PriceSync />
       <TooltipProvider>
         <Toaster />
         <Router />

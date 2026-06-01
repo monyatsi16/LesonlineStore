@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/Navbar";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUp, ArrowDown, Minus, RefreshCw, Zap, TrendingUp, DollarSign, Package, BrainCircuit, Plus, ShoppingBag, Eye } from "lucide-react";
+import { ArrowUp, ArrowDown, Minus, RefreshCw, Zap, TrendingUp, DollarSign, Package, BrainCircuit, Plus, ShoppingBag, Eye, Clock3, Route, Search, SlidersHorizontal } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,17 +15,36 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import type { Product, PriceRecommendation, SalesData, Order } from "@shared/schema";
 
+type TrackingEvent = {
+  status: string;
+  label: string;
+  timestamp: string;
+  note?: string;
+};
+
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [checkpointDrafts, setCheckpointDrafts] = useState<Record<number, { status: string; note: string }>>({});
 
-  const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
-  const { data: recommendations = [] } = useQuery<PriceRecommendation[]>({ queryKey: ["/api/recommendations"] });
-  const { data: salesData = [] } = useQuery<SalesData[]>({ queryKey: ["/api/sales"] });
-  const { data: sellerOrders = [] } = useQuery<Order[]>({ queryKey: ["/api/orders/seller"] });
+  const adminQueryOptions = {
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always" as const,
+    refetchInterval: 30_000,
+    enabled: !isAuthLoading && !!user,
+  };
+  const userScope = user?.id ?? "anonymous";
+  const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products", userScope], ...adminQueryOptions });
+  const recommendationsQuery = useQuery<PriceRecommendation[]>({ queryKey: ["/api/recommendations", userScope], ...adminQueryOptions });
+  const recommendations = recommendationsQuery.data ?? [];
+  const { data: salesData = [] } = useQuery<SalesData[]>({ queryKey: ["/api/sales", userScope], ...adminQueryOptions });
+  const { data: sellerOrders = [] } = useQuery<Order[]>({ queryKey: ["/api/orders/seller", userScope], ...adminQueryOptions });
 
   const runModelMutation = useMutation({
     mutationFn: async () => {
@@ -74,6 +93,64 @@ export default function Dashboard() {
     },
   });
 
+  const checkpointMutation = useMutation({
+    mutationFn: async ({
+      orderId,
+      status,
+      note,
+    }: {
+      orderId: number;
+      status: string;
+      note?: string;
+    }) => {
+      const labelMap: Record<string, string> = {
+        paid: "Order Placed",
+        processing: "Seller Processing",
+        in_transit: "In Transit",
+        at_checkpoint: "At Checkpoint",
+        ready: "Ready for Pickup",
+        fulfilled: "Delivered / Collected",
+        cancelled: "Order Cancelled",
+      };
+
+      await apiRequest("POST", `/api/orders/${orderId}/checkpoint`, {
+        status,
+        label: labelMap[status] || "Checkpoint Update",
+        note: note || undefined,
+      });
+    },
+    onSuccess: (_data, variables) => {
+      toast({ title: "Checkpoint Updated", description: `Order #${variables.orderId} moved to ${variables.status.replace(/_/g, " ")}.` });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/seller"] });
+      setCheckpointDrafts((prev) => ({
+        ...prev,
+        [variables.orderId]: { ...prev[variables.orderId], note: "", status: variables.status },
+      }));
+    },
+  });
+
+  const getDraft = (order: Order) =>
+    checkpointDrafts[order.id] || {
+      status: order.status === "paid" ? "processing" : order.status,
+      note: "",
+    };
+
+  const getTimeline = (order: Order): TrackingEvent[] => {
+    if (Array.isArray(order.trackingHistory) && order.trackingHistory.length > 0) {
+      return [...order.trackingHistory]
+        .filter((event): event is TrackingEvent => Boolean(event?.status && event?.label && event?.timestamp))
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    }
+
+    return [
+      {
+        status: order.status,
+        label: "Current Status",
+        timestamp: order.createdAt ? new Date(order.createdAt).toISOString() : new Date().toISOString(),
+      },
+    ];
+  };
+
   const refreshData = () => {
     setIsRefreshing(true);
     queryClient.invalidateQueries();
@@ -86,7 +163,22 @@ export default function Dashboard() {
   const totalRevenue = salesData.reduce((sum, s) => sum + s.revenue, 0);
   const totalOrders = sellerOrders.length;
   const totalViews = products.reduce((sum, p) => sum + (p.views || 0), 0);
-  const pendingOrders = sellerOrders.filter(o => o.status === "pending").length;
+  const paidOrders = sellerOrders.filter(o => o.status === "paid").length;
+  const processingOrders = sellerOrders.filter(o => o.status === "processing").length;
+  const readyOrders = sellerOrders.filter((o) => o.status === "ready").length;
+
+  const paymentMethodLabel = (method?: string) => {
+    if (method === "bank_transfer") return "Bank Transfer";
+    if (method === "card") return "Card Payment";
+    return "Cash on Delivery";
+  };
+
+  const filteredSellerOrders = sellerOrders.filter((order) => {
+    const matchesStatus = orderStatusFilter === "all" || order.status === orderStatusFilter;
+    const haystack = `${order.id} ${order.buyerName} ${order.buyerEmail}`.toLowerCase();
+    const matchesSearch = haystack.includes(orderSearch.trim().toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -105,22 +197,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 font-sans">
-      <Navbar />
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-heading font-bold text-foreground" data-testid="text-dashboard-title">
-              {user?.businessName || "Dashboard"}
-            </h1>
-            <p className="text-muted-foreground">Manage your products, orders, and pricing on the marketplace.</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={refreshData} disabled={isRefreshing} className="gap-2" data-testid="button-refresh">
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+    <AdminLayout title={user?.businessName || "Dashboard"} subtitle="Manage your products, orders, and pricing on the marketplace">
+      <div className="flex gap-2 flex-wrap mb-8">
+        <Button variant="outline" onClick={refreshData} disabled={isRefreshing} className="gap-2" data-testid="button-refresh">
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
             <Dialog open={addProductOpen} onOpenChange={setAddProductOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2" data-testid="button-add-product">
@@ -175,8 +257,7 @@ export default function Dashboard() {
               <BrainCircuit className="h-4 w-4" />
               {runModelMutation.isPending ? 'Running...' : 'Run Gradient Boosting'}
             </Button>
-          </div>
-        </div>
+      </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Card>
@@ -196,7 +277,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-total-orders">{totalOrders}</div>
-              <p className="text-xs text-muted-foreground">{pendingOrders} pending</p>
+              <p className="text-xs text-muted-foreground">{paidOrders} paid · {processingOrders} processing · {readyOrders} ready</p>
             </CardContent>
           </Card>
           <Card>
@@ -294,31 +375,181 @@ export default function Dashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Orders</CardTitle>
-                    <CardDescription>Orders from buyers on the marketplace</CardDescription>
+                    <CardDescription>Smart order board with checkpoint updates, payment method, and collection readiness</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    <div className="mb-4 grid gap-2 md:grid-cols-[1fr_180px]">
+                      <div className="relative">
+                        <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Input
+                          value={orderSearch}
+                          onChange={(e) => setOrderSearch(e.target.value)}
+                          placeholder="Search by order #, buyer name, or email"
+                          className="pl-9 h-9"
+                          data-testid="input-order-search"
+                        />
+                      </div>
+                      <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                        <SelectTrigger className="h-9" data-testid="select-order-status-filter">
+                          <div className="flex items-center gap-2">
+                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Filter status" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All statuses</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="in_transit">In Transit</SelectItem>
+                          <SelectItem value="at_checkpoint">At Checkpoint</SelectItem>
+                          <SelectItem value="ready">Ready for Pickup</SelectItem>
+                          <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="mb-4 flex flex-wrap gap-2 text-xs">
+                      <Badge variant="outline">Total: {sellerOrders.length}</Badge>
+                      <Badge variant="outline">Filtered: {filteredSellerOrders.length}</Badge>
+                      <Badge variant="outline">Ready: {readyOrders}</Badge>
+                    </div>
+
                     <div className="space-y-3">
-                      {sellerOrders.slice(0, 10).map(order => (
+                      {filteredSellerOrders.slice(0, 10).map(order => (
                         <div key={order.id} className="flex items-center justify-between border-b pb-3 last:border-0" data-testid={`row-order-${order.id}`}>
                           <div>
                             <p className="font-medium text-sm">Order #{order.id} — {order.buyerName}</p>
-                            <p className="text-xs text-muted-foreground">{order.buyerEmail} · Qty: {order.quantity}</p>
+                            <p className="text-xs text-muted-foreground">{order.buyerEmail} · Qty: {order.quantity} · {paymentMethodLabel(order.paymentMethod)}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Placed: {order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <Select
+                                value={getDraft(order).status}
+                                onValueChange={(value) =>
+                                  setCheckpointDrafts((prev) => ({
+                                    ...prev,
+                                    [order.id]: { ...getDraft(order), status: value },
+                                  }))
+                                }
+                              >
+                                <SelectTrigger className="h-8 w-[160px]" data-testid={`select-checkpoint-status-${order.id}`}>
+                                  <SelectValue placeholder="Checkpoint" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="processing">Processing</SelectItem>
+                                  <SelectItem value="in_transit">In Transit</SelectItem>
+                                  <SelectItem value="at_checkpoint">At Checkpoint</SelectItem>
+                                  <SelectItem value="ready">Ready</SelectItem>
+                                  <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                value={getDraft(order).note}
+                                onChange={(e) =>
+                                  setCheckpointDrafts((prev) => ({
+                                    ...prev,
+                                    [order.id]: { ...getDraft(order), note: e.target.value },
+                                  }))
+                                }
+                                className="h-8 w-[220px]"
+                                placeholder="Checkpoint note (optional)"
+                                data-testid={`input-checkpoint-note-${order.id}`}
+                              />
+                            </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right">
                               <div className="font-bold text-sm">M{order.totalPrice.toLocaleString()}</div>
-                              <Badge variant={order.status === "pending" ? "secondary" : order.status === "confirmed" ? "default" : "outline"} className="text-[10px]">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                order.status === "paid" ? "bg-blue-100 text-blue-800" :
+                                order.status === "processing" ? "bg-yellow-100 text-yellow-800" :
+                                order.status === "in_transit" ? "bg-indigo-100 text-indigo-800" :
+                                order.status === "at_checkpoint" ? "bg-cyan-100 text-cyan-800" :
+                                order.status === "ready" ? "bg-purple-100 text-purple-800" :
+                                order.status === "fulfilled" ? "bg-green-100 text-green-800" :
+                                "bg-gray-100 text-gray-800"
+                              }`}>
                                 {order.status}
-                              </Badge>
+                              </span>
                             </div>
-                            {order.status === "pending" && (
-                              <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: "confirmed" })} data-testid={`button-confirm-${order.id}`}>
-                                Confirm
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                checkpointMutation.mutate({
+                                  orderId: order.id,
+                                  status: getDraft(order).status,
+                                  note: getDraft(order).note,
+                                })
+                              }
+                              disabled={checkpointMutation.isPending}
+                              data-testid={`button-checkpoint-update-${order.id}`}
+                            >
+                              Update Checkpoint
+                            </Button>
+                            {order.status === "paid" && (
+                              <Button size="sm" variant="outline" onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: "processing" })} data-testid={`button-process-${order.id}`}>
+                                Quick Process
                               </Button>
                             )}
                           </div>
                         </div>
                       ))}
+
+                      {filteredSellerOrders.length === 0 && (
+                        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground" data-testid="empty-filtered-orders">
+                          No orders match this search/filter yet.
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {sellerOrders.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Route className="h-4 w-4 text-primary" />
+                      Order Checkpoint Timelines
+                    </CardTitle>
+                    <CardDescription>Live progression history for your most recent orders</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-5">
+                      {sellerOrders.slice(0, 8).map((order) => {
+                        const timeline = getTimeline(order);
+                        return (
+                          <div key={`timeline-${order.id}`} className="rounded-xl border p-4 bg-white" data-testid={`card-order-timeline-${order.id}`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <p className="font-semibold text-sm">Order #{order.id}</p>
+                                <p className="text-xs text-muted-foreground">{order.buyerName} · {order.buyerEmail}</p>
+                              </div>
+                              <Badge variant="outline" className="text-[10px]">{timeline.length} checkpoints</Badge>
+                            </div>
+
+                            <div className="space-y-2">
+                              {timeline.map((event, idx) => (
+                                <div key={`${order.id}-${event.timestamp}-${idx}`} className="flex gap-3">
+                                  <div className="pt-0.5">
+                                    <Clock3 className="h-3.5 w-3.5 text-primary" />
+                                  </div>
+                                  <div className="flex-1 rounded-md border p-2.5">
+                                    <div className="flex items-center justify-between gap-3">
+                                      <p className="text-xs font-medium">{event.label}</p>
+                                      <span className="text-[10px] text-muted-foreground">{new Date(event.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground mt-0.5">Status: {event.status.replace(/_/g, " ")}</p>
+                                    {event.note ? <p className="text-[10px] mt-1">{event.note}</p> : null}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -373,7 +604,22 @@ export default function Dashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                  {recommendations.length === 0 ? (
+                  {recommendationsQuery.isError ? (
+                    <div className="p-6 text-center text-destructive" data-testid="recommendations-fetch-error">
+                      <p className="font-medium">Could not load recommendations right now.</p>
+                      <p className="text-xs mt-2 text-muted-foreground">
+                        {recommendationsQuery.error instanceof Error ? recommendationsQuery.error.message : "Request failed"}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => recommendationsQuery.refetch()}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : recommendations.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 mb-4">
                         <CheckIcon className="h-6 w-6" />
@@ -400,18 +646,17 @@ export default function Dashboard() {
                               {(rec.confidence * 100).toFixed(0)}%
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div className="bg-slate-100 rounded p-2 text-center">
-                              <div className="text-[10px] text-muted-foreground uppercase">Current</div>
-                              <div className="font-mono font-medium">M{rec.currentPrice.toFixed(2)}</div>
-                            </div>
-                            <div className="bg-primary/10 rounded p-2 text-center border border-primary/20">
-                              <div className="text-[10px] text-primary uppercase font-bold">Suggested</div>
-                              <div className="font-mono font-bold text-primary flex items-center justify-center gap-1">
-                                M{rec.recommendedPrice.toFixed(2)}
-                                {rec.trend === 'up' && <ArrowUp className="h-3 w-3" />}
-                                {rec.trend === 'down' && <ArrowDown className="h-3 w-3" />}
-                                {rec.trend === 'stable' && <Minus className="h-3 w-3" />}
+                          <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-3">
+                            <div className="flex-1 bg-slate-100 rounded p-3 flex flex-col items-center text-center">
+                              <div className="text-[10px] text-muted-foreground uppercase">Current / Suggested</div>
+                              <div className="flex items-center justify-center gap-3 mt-2">
+                                <div className="text-sm text-muted-foreground line-through">M{rec.currentPrice.toFixed(2)}</div>
+                                <div className="font-mono font-semibold text-primary flex items-center gap-1">
+                                  M{rec.recommendedPrice.toFixed(2)}
+                                  {rec.trend === 'up' && <ArrowUp className="h-3 w-3" />}
+                                  {rec.trend === 'down' && <ArrowDown className="h-3 w-3" />}
+                                  {rec.trend === 'stable' && <Minus className="h-3 w-3" />}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -430,12 +675,12 @@ export default function Dashboard() {
                     </div>
                   )}
                 </CardContent>
+                
               </Card>
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </AdminLayout>
   );
 }
 

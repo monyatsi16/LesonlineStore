@@ -68,6 +68,14 @@ async function seed() {
       userId: sellerId,
       name: item.name,
       price: item.price,
+      // Persist source/manufacturer cost when available, otherwise use 3% fallback.
+      costPrice: Number(
+        (
+          typeof item.costPrice === "number" && item.costPrice > 0
+            ? item.costPrice
+            : item.price * 0.97
+        ).toFixed(2)
+      ),
       category: item.category,
       image: item.image,
       stock: item.stock,

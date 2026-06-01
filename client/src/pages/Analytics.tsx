@@ -1,16 +1,16 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import { Navbar } from "@/components/Navbar";
+import { AdminLayout } from "@/components/AdminLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ScatterChart, Scatter, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis, LineChart, Line,
+  PieChart, Pie, Cell, LineChart, Line, ComposedChart, LabelList,
 } from "recharts";
-import { TrendingUp, TrendingDown, Minus, BarChart3, PieChart as PieChartIcon, Activity, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BarChart2, BarChart3, PieChart as PieChartIcon, Activity } from "lucide-react";
 
 const COLORS = ["#2563eb", "#16a34a", "#ea580c", "#9333ea", "#e11d48", "#0891b2", "#ca8a04", "#6366f1"];
 
@@ -61,31 +61,42 @@ export default function Analytics() {
   const { data, isLoading, error } = useQuery<AnalyticsOverview>({
     queryKey: ["/api/analytics/overview"],
     queryFn: getQueryFn({ on401: "throw" }),
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+  });
+
+  const { data: fallbackRecommendations } = useQuery<Recommendation[]>({
+    queryKey: ["/api/recommendations"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
   });
 
   if (isLoading) {
     return (
-      <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center" data-testid="analytics-loading">
-          <div className="text-muted-foreground text-lg">Loading analytics...</div>
+      <AdminLayout title="Pricing Analytics" subtitle="Market insights and dynamic pricing intelligence">
+        <div className="flex items-center justify-center py-20" data-testid="analytics-loading">
+          <div className="text-gray-500 text-lg">Loading analytics...</div>
         </div>
-      </>
+      </AdminLayout>
     );
   }
 
   if (error || !data) {
     return (
-      <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center" data-testid="analytics-error">
-          <div className="text-destructive">Failed to load analytics data.</div>
+      <AdminLayout title="Pricing Analytics" subtitle="Market insights and dynamic pricing intelligence">
+        <div className="flex items-center justify-center py-20" data-testid="analytics-error">
+          <div className="text-red-600">Failed to load analytics data. Please try refreshing the page.</div>
         </div>
-      </>
+      </AdminLayout>
     );
   }
 
   const { categoryStats, products, recommendations, ordersByCategory, revenueByCategory } = data;
+
+  const visibleRecommendations = recommendations.length > 0 ? recommendations : fallbackRecommendations ?? [];
 
   const priceDistributionData = Object.entries(categoryStats).map(([category, stats]) => ({
     category,
@@ -106,13 +117,6 @@ export default function Analytics() {
     volatility: Number(((stats.std / stats.mean) * 100).toFixed(1)),
   }));
 
-  const scatterData = products.map((p) => ({
-    name: p.name,
-    price: p.price,
-    views: p.views,
-    stock: p.stock,
-    category: p.category,
-  }));
 
   const categoryPerformance = Object.entries(categoryStats).map(([category, stats]) => ({
     category,
@@ -139,28 +143,12 @@ export default function Analytics() {
   const totalProducts = products.length;
   const avgPrice = products.length > 0 ? products.reduce((s, p) => s + p.price, 0) / products.length : 0;
   const totalCategories = Object.keys(categoryStats).length;
-  const pendingRecs = recommendations.length;
+  const pendingRecs = visibleRecommendations.length;
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-muted/30">
-        <div className="container mx-auto px-4 py-8 space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold" data-testid="text-analytics-title">Pricing Analytics</h1>
-              <p className="text-muted-foreground mt-1">
-                Market insights and dynamic pricing intelligence
-              </p>
-            </div>
-            {user && (
-              <Badge variant="outline" className="text-sm" data-testid="badge-user-role">
-                {user.role === "admin" ? "Admin View" : "Seller View"}
-              </Badge>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <AdminLayout title="Pricing Analytics" subtitle="Market insights and dynamic pricing intelligence">
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card data-testid="stat-total-products">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -179,7 +167,7 @@ export default function Analytics() {
                     <p className="text-sm text-muted-foreground">Average Price</p>
                     <p className="text-2xl font-bold">M{avgPrice.toFixed(0)}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-green-600 opacity-70" />
+                  <BarChart2 className="h-8 w-8 text-green-600 opacity-70" />
                 </div>
               </CardContent>
             </Card>
@@ -265,63 +253,41 @@ export default function Analytics() {
                   </CardContent>
                 </Card>
               </div>
-
-              <Card data-testid="chart-price-quartiles">
-                <CardHeader>
-                  <CardTitle>Price Quartiles by Category (Q25 / Median / Q75)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={priceDistributionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-                      <YAxis tickFormatter={(v) => `M${v}`} />
-                      <Tooltip formatter={(value: number) => `M${value.toFixed(2)}`} />
-                      <Legend />
-                      <Bar dataKey="q25" fill="#93c5fd" name="25th Percentile" />
-                      <Bar dataKey="median" fill="#2563eb" name="Median" />
-                      <Bar dataKey="q75" fill="#1e40af" name="75th Percentile" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
             </TabsContent>
 
             <TabsContent value="insights" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card data-testid="chart-avg-prices">
                   <CardHeader>
-                    <CardTitle>Average Prices by Category</CardTitle>
+                    <CardTitle>Average Selling Price by Category</CardTitle>
+                    <CardDescription>What products in each category sell for on average</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={400}>
                       <BarChart data={marketInsightsData}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="category" tick={{ fontSize: 11 }} />
                         <YAxis tickFormatter={(v) => `M${v}`} />
-                        <Tooltip formatter={(value: number, name: string) =>
-                          name === "volatility" ? `${value}%` : `M${value}`
-                        } />
-                        <Legend />
-                        <Bar dataKey="avgPrice" fill="#2563eb" name="Avg Price" />
-                        <Bar dataKey="priceRange" fill="#f97316" name="Price Range" />
+                        <Tooltip formatter={(value: number) => [`M${value.toLocaleString()}`, "Avg Price"]} />
+                        <Bar dataKey="avgPrice" fill="#2563eb" name="Avg Price" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
 
-                <Card data-testid="chart-volatility">
+                <Card data-testid="chart-products-per-category">
                   <CardHeader>
-                    <CardTitle>Price Volatility by Category (%)</CardTitle>
+                    <CardTitle>Number of Products per Category</CardTitle>
+                    <CardDescription>How many products are listed in each category</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={400}>
                       <BarChart data={marketInsightsData}>
-                        <CartesianGrid strokeDasharray="3 3" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-                        <YAxis tickFormatter={(v) => `${v}%`} />
-                        <Tooltip formatter={(value: number) => `${value}%`} />
-                        <Bar dataKey="volatility" fill="#9333ea" name="Volatility (CV%)" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip formatter={(value: number) => [value, "Products"]} />
+                        <Bar dataKey="products" fill="#10b981" name="Products" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -370,7 +336,7 @@ export default function Analytics() {
             </TabsContent>
 
             <TabsContent value="recommendations" className="space-y-6">
-              {recommendations.length === 0 ? (
+              {visibleRecommendations.length === 0 ? (
                 <Card data-testid="no-recommendations">
                   <CardContent className="py-12 text-center">
                     <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -389,7 +355,7 @@ export default function Analytics() {
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={400}>
-                          <BarChart data={recommendations.slice(0, 10).map(r => ({
+                          <ComposedChart data={visibleRecommendations.slice(0, 10).map(r => ({
                             name: r.productName.length > 15 ? r.productName.slice(0, 15) + "..." : r.productName,
                             current: r.currentPrice,
                             recommended: r.recommendedPrice,
@@ -399,9 +365,11 @@ export default function Analytics() {
                             <YAxis tickFormatter={(v) => `M${v}`} />
                             <Tooltip formatter={(value: number) => `M${value.toFixed(2)}`} />
                             <Legend />
-                            <Bar dataKey="current" fill="#94a3b8" name="Current Price" />
-                            <Bar dataKey="recommended" fill="#16a34a" name="Recommended Price" />
-                          </BarChart>
+                            <Bar dataKey="recommended" fill="#16a34a" name="Recommended Price">
+                              <LabelList dataKey="recommended" position="right" formatter={(value: number) => `M${value.toFixed(0)}`} />
+                            </Bar>
+                            <Line type="monotone" dataKey="current" stroke="#64748b" strokeWidth={3} dot={false} name="Original Price" />
+                          </ComposedChart>
                         </ResponsiveContainer>
                       </CardContent>
                     </Card>
@@ -412,7 +380,7 @@ export default function Analytics() {
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={400}>
-                          <BarChart data={recommendations.slice(0, 10).map(r => ({
+                          <BarChart data={visibleRecommendations.slice(0, 10).map(r => ({
                             name: r.productName.length > 15 ? r.productName.slice(0, 15) + "..." : r.productName,
                             confidence: Number((r.confidence * 100).toFixed(1)),
                           }))}>
@@ -445,29 +413,36 @@ export default function Analytics() {
                             </tr>
                           </thead>
                           <tbody>
-                            {recommendations.map((rec) => {
+                            {visibleRecommendations.map((rec) => {
                               const change = ((rec.recommendedPrice - rec.currentPrice) / rec.currentPrice) * 100;
                               return (
-                                <tr key={rec.id} className="border-b hover:bg-muted/50" data-testid={`row-rec-${rec.id}`}>
-                                  <td className="py-3 px-2 font-medium">{rec.productName}</td>
-                                  <td className="text-right py-3 px-2">M{rec.currentPrice.toFixed(2)}</td>
-                                  <td className="text-right py-3 px-2 font-semibold">M{rec.recommendedPrice.toFixed(2)}</td>
-                                  <td className="text-right py-3 px-2">
-                                    <span className={change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-muted-foreground"}>
-                                      {change > 0 ? "+" : ""}{change.toFixed(1)}%
-                                    </span>
-                                  </td>
-                                  <td className="text-center py-3 px-2">
-                                    {rec.trend === "up" && <TrendingUp className="h-4 w-4 text-green-600 inline" />}
-                                    {rec.trend === "down" && <TrendingDown className="h-4 w-4 text-red-600 inline" />}
-                                    {rec.trend === "stable" && <Minus className="h-4 w-4 text-muted-foreground inline" />}
-                                  </td>
-                                  <td className="text-right py-3 px-2">
-                                    <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"}>
-                                      {(rec.confidence * 100).toFixed(0)}%
-                                    </Badge>
-                                  </td>
-                                </tr>
+                                <React.Fragment key={rec.id}>
+                                  <tr className="border-b hover:bg-muted/50" data-testid={`row-rec-${rec.id}`}>
+                                    <td className="py-3 px-2 font-medium">{rec.productName}</td>
+                                    <td className="text-right py-3 px-2">M{rec.currentPrice.toFixed(2)}</td>
+                                    <td className="text-right py-3 px-2 font-semibold">M{rec.recommendedPrice.toFixed(2)}</td>
+                                    <td className="text-right py-3 px-2">
+                                      <span className={change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-muted-foreground"}>
+                                        {change > 0 ? "+" : ""}{change.toFixed(1)}%
+                                      </span>
+                                    </td>
+                                    <td className="text-center py-3 px-2">
+                                      {rec.trend === "up" && <TrendingUp className="h-4 w-4 text-green-600 inline" />}
+                                      {rec.trend === "down" && <TrendingDown className="h-4 w-4 text-red-600 inline" />}
+                                      {rec.trend === "stable" && <Minus className="h-4 w-4 text-muted-foreground inline" />}
+                                    </td>
+                                    <td className="text-right py-3 px-2">
+                                      <Badge variant={rec.confidence > 0.8 ? "default" : "secondary"}>
+                                        {(rec.confidence * 100).toFixed(0)}%
+                                      </Badge>
+                                    </td>
+                                  </tr>
+                                  <tr className="border-b bg-muted/30" data-testid={`row-rec-reason-${rec.id}`}>
+                                    <td colSpan={6} className="py-2 px-4">
+                                      <p className="text-sm text-muted-foreground italic">{rec.reason}</p>
+                                    </td>
+                                  </tr>
+                                </React.Fragment>
                               );
                             })}
                           </tbody>
@@ -480,121 +455,162 @@ export default function Analytics() {
             </TabsContent>
 
             <TabsContent value="demand" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card data-testid="chart-scatter-price-views">
-                  <CardHeader>
-                    <CardTitle>Price vs Views (Demand Signal)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <ScatterChart>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="price" name="Price" tickFormatter={(v) => `M${v}`} />
-                        <YAxis type="number" dataKey="views" name="Views" />
-                        <Tooltip
-                          cursor={{ strokeDasharray: "3 3" }}
-                          formatter={(value: number, name: string) => name === "Price" ? `M${value}` : value}
-                          labelFormatter={() => ""}
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const d = payload[0].payload;
-                              return (
-                                <div className="bg-background border rounded-md p-2 shadow-md text-sm">
-                                  <p className="font-medium">{d.name}</p>
-                                  <p>Price: M{d.price}</p>
-                                  <p>Views: {d.views}</p>
-                                  <p>Category: {d.category}</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Scatter name="Products" data={scatterData} fill="#2563eb" />
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+              {(() => {
+                const viewedProducts = products.filter(p => p.views > 0);
+                const viewedScatterData = viewedProducts.map(p => ({
+                  name: p.name,
+                  price: p.price,
+                  views: p.views,
+                  stock: p.stock,
+                  category: p.category,
+                }));
+                const topViewedProducts = [...viewedProducts]
+                  .sort((a, b) => b.views - a.views)
+                  .slice(0, 20)
+                  .map(p => ({ name: p.name, views: p.views, category: p.category }));
 
-                <Card data-testid="chart-scatter-price-stock">
-                  <CardHeader>
-                    <CardTitle>Price vs Stock Level</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <ScatterChart>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" dataKey="price" name="Price" tickFormatter={(v) => `M${v}`} />
-                        <YAxis type="number" dataKey="stock" name="Stock" />
-                        <Tooltip
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const d = payload[0].payload;
-                              return (
-                                <div className="bg-background border rounded-md p-2 shadow-md text-sm">
-                                  <p className="font-medium">{d.name}</p>
-                                  <p>Price: M{d.price}</p>
-                                  <p>Stock: {d.stock}</p>
-                                  <p>Category: {d.category}</p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Scatter name="Products" data={scatterData} fill="#16a34a" />
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
+                return (
+                  <>
+                    <Card data-testid="chart-top-viewed-products">
+                      <CardHeader>
+                        <CardTitle>Top {topViewedProducts.length} Most Viewed Products</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {topViewedProducts.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">No products have been viewed yet.</p>
+                        ) : (
+                          <ResponsiveContainer width="100%" height={Math.max(300, topViewedProducts.length * 40)}>
+                            <BarChart data={topViewedProducts} layout="vertical">
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis type="category" dataKey="name" width={250} tick={{ fontSize: 11 }} />
+                              <Tooltip content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div className="bg-background border rounded-md p-2 shadow-md text-sm">
+                                      <p className="font-medium">{d.name}</p>
+                                      <p>Views: {d.views}</p>
+                                      <p>Category: {d.category}</p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }} />
+                              <Bar dataKey="views" fill="#2563eb" name="Views" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        )}
+                      </CardContent>
+                    </Card>
 
-              <Card data-testid="chart-views-by-category">
-                <CardHeader>
-                  <CardTitle>Total Views by Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={(() => {
-                      const catViews: Record<string, number> = {};
-                      products.forEach(p => {
-                        catViews[p.category] = (catViews[p.category] || 0) + p.views;
-                      });
-                      return Object.entries(catViews).map(([category, views]) => ({ category, views }));
-                    })()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="views" fill="#0891b2" name="Total Views" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card data-testid="chart-price-per-viewed-product">
+                        <CardHeader>
+                          <CardTitle>Price of Each Viewed Product</CardTitle>
+                          <CardDescription>Selling price for every product that has been viewed</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {viewedScatterData.length === 0 ? (
+                            <p className="text-muted-foreground text-center py-8">No products have been viewed yet.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height={Math.max(300, viewedScatterData.length * 36)}>
+                              <BarChart data={[...viewedScatterData].sort((a, b) => b.price - a.price)} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis type="number" tickFormatter={(v) => `M${v}`} />
+                                <YAxis type="category" dataKey="name" width={220} tick={{ fontSize: 11 }} />
+                                <Tooltip content={({ active, payload }) => {
+                                  if (active && payload && payload.length) {
+                                    const d = payload[0].payload;
+                                    return (
+                                      <div className="bg-background border rounded-md p-2 shadow-md text-sm">
+                                        <p className="font-medium">{d.name}</p>
+                                        <p>Price: M{d.price.toLocaleString()}</p>
+                                        <p>Views: {d.views}</p>
+                                        <p>Category: {d.category}</p>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                }} />
+                                <Bar dataKey="price" fill="#2563eb" name="Price (M)" radius={[0, 4, 4, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card data-testid="chart-stock-per-viewed-product">
+                        <CardHeader>
+                          <CardTitle>Stock Remaining per Product</CardTitle>
+                          <CardDescription>How many units are left in stock for each viewed product</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {viewedScatterData.length === 0 ? (
+                            <p className="text-muted-foreground text-center py-8">No products have been viewed yet.</p>
+                          ) : (
+                            <ResponsiveContainer width="100%" height={Math.max(300, viewedScatterData.length * 36)}>
+                              <BarChart data={[...viewedScatterData].sort((a, b) => a.stock - b.stock)} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis type="number" allowDecimals={false} />
+                                <YAxis type="category" dataKey="name" width={220} tick={{ fontSize: 11 }} />
+                                <Tooltip content={({ active, payload }) => {
+                                  if (active && payload && payload.length) {
+                                    const d = payload[0].payload;
+                                    return (
+                                      <div className="bg-background border rounded-md p-2 shadow-md text-sm">
+                                        <p className="font-medium">{d.name}</p>
+                                        <p>Stock: {d.stock} units remaining</p>
+                                        <p>Price: M{d.price.toLocaleString()}</p>
+                                        <p>Category: {d.category}</p>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                }} />
+                                <Bar dataKey="stock" fill="#16a34a" name="Units in Stock" radius={[0, 4, 4, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card data-testid="chart-views-by-category">
+                      <CardHeader>
+                        <CardTitle>Total Views by Category (Viewed Products Only)</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {viewedProducts.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">No products have been viewed yet.</p>
+                        ) : (
+                          <ResponsiveContainer width="100%" height={350}>
+                            <BarChart data={(() => {
+                              const catViews: Record<string, number> = {};
+                              viewedProducts.forEach(p => {
+                                catViews[p.category] = (catViews[p.category] || 0) + p.views;
+                              });
+                              return Object.entries(catViews)
+                                .map(([category, views]) => ({ category, views }))
+                                .filter(c => c.views > 0)
+                                .sort((a, b) => b.views - a.views);
+                            })()}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="category" tick={{ fontSize: 11 }} />
+                              <YAxis />
+                              <Tooltip />
+                              <Bar dataKey="views" fill="#0891b2" name="Total Views" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              })()}
             </TabsContent>
 
             <TabsContent value="comparison" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card data-testid="chart-radar">
-                  <CardHeader>
-                    <CardTitle>Category Performance Radar</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <RadarChart data={radarData}>
-                        <PolarGrid />
-                        <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                        <Radar name="Avg Price" dataKey="avgPrice" stroke="#2563eb" fill="#2563eb" fillOpacity={0.2} />
-                        <Radar name="Volume" dataKey="volume" stroke="#16a34a" fill="#16a34a" fillOpacity={0.2} />
-                        <Radar name="Orders" dataKey="orders" stroke="#ea580c" fill="#ea580c" fillOpacity={0.2} />
-                        <Legend />
-                        <Tooltip />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
                 <Card data-testid="chart-revenue-by-category">
                   <CardHeader>
                     <CardTitle>Revenue by Category</CardTitle>
@@ -604,16 +620,16 @@ export default function Analytics() {
                       <BarChart data={categoryPerformance.filter(c => c.revenue > 0)}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-                        <YAxis tickFormatter={(v) => `M${v}`} />
-                        <Tooltip formatter={(value: number) => `M${value}`} />
+                        <YAxis yAxisId="revenue" tickFormatter={(v) => `M${v}`} orientation="left" />
+                        <YAxis yAxisId="orders" orientation="right" />
+                        <Tooltip formatter={(value: number, name: string) => name === "Revenue" ? `M${value}` : value} />
                         <Legend />
-                        <Bar dataKey="revenue" fill="#16a34a" name="Revenue" />
-                        <Bar dataKey="orders" fill="#2563eb" name="Orders" />
+                        <Bar dataKey="revenue" yAxisId="revenue" fill="#16a34a" name="Revenue" />
+                        <Bar dataKey="orders" yAxisId="orders" fill="#2563eb" name="Orders" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
-              </div>
 
               <Card data-testid="table-category-comparison">
                 <CardHeader>
@@ -647,9 +663,9 @@ export default function Analytics() {
                 </CardContent>
               </Card>
             </TabsContent>
+
           </Tabs>
-        </div>
       </div>
-    </>
+    </AdminLayout>
   );
 }

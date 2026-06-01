@@ -4,3 +4,11 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+.local/
+*.db-shm
+*.db-wal
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example

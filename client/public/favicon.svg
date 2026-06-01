@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="10" fill="#1a1a2e"/>
+    <text x="32" y="28" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">LES</text>
+    <text x="32" y="48" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#c45e72" text-anchor="middle" dominant-baseline="middle">online</text>
+  </svg>

@@ -60,6 +60,10 @@ export function setupAuth(app: Express) {
           const user = await storage.getUserByEmail(email);
           if (!user) return done(null, false, { message: "Invalid email or password" });
 
+          if (user.role !== "admin") {
+            return done(null, false, { message: "Admin access only" });
+          }
+
           const isValid = await comparePasswords(password, user.password);
           if (!isValid) return done(null, false, { message: "Invalid email or password" });
 
@@ -83,38 +87,6 @@ export function setupAuth(app: Express) {
       done(null, safeUser as Express.User);
     } catch (err) {
       done(err);
-    }
-  });
-
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { email, password, name, businessName } = req.body;
-
-      if (!email || !password || !name || !businessName) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
-
-      const existing = await storage.getUserByEmail(email);
-      if (existing) {
-        return res.status(400).json({ message: "An account with this email already exists" });
-      }
-
-      const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        name,
-        businessName,
-      });
-
-      const { password: _, ...safeUser } = user;
-
-      req.login(safeUser as Express.User, (err) => {
-        if (err) return res.status(500).json({ message: "Login failed after registration" });
-        res.status(201).json(safeUser);
-      });
-    } catch (err: any) {
-      res.status(500).json({ message: err.message || "Registration failed" });
     }
   });
 
