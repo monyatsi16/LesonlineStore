@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Install production dependencies
 COPY package.json package-lock.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci --omit=dev
 
 # Copy source

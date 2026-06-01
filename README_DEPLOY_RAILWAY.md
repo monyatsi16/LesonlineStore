@@ -24,6 +24,7 @@ Steps
 
 3. Configure the service
    - Railway will detect the project. Ensure the build command is `npm ci && npm run build` and the start command is `npm run start`.
+   - Make sure the service uses `PUPPETEER_SKIP_DOWNLOAD=true` during install/build to keep Puppeteer from downloading Chrome in the build environment.
    - Alternatively, Railway can use the included `Dockerfile`.
 
 4. Database
