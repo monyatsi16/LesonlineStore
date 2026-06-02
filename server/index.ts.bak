@@ -104,35 +104,23 @@ app.use((req, res, next) => {
   const activePort = await listenWithPortFallback(initialPort);
   console.log(`\n  App is running at: http://localhost:${activePort}\n`);
 
-  // Start scheduler and model training depending on environment variables.
-  // In constrained environments (free builders), set `DISABLE_SCHEDULER=true`
-  // and/or `DISABLE_MODEL_TRAINING=true` to avoid heavy background work.
-  const disableScheduler = String(process.env.DISABLE_SCHEDULER || "false").toLowerCase() === "true";
-  const disableModelTraining = String(process.env.DISABLE_MODEL_TRAINING || "false").toLowerCase() === "true";
+  // Start scheduler immediately. It will skip cycles while the model is still training
+  // and fire as soon as training completes. Model training runs in parallel.
+  void (async () => {
+    try {
+      // Start scheduler first so the interval timer is registered immediately
+      await initPriceScheduler();
+    } catch (error) {
+      console.error("Scheduler init failed:", error);
+    }
+  })();
 
-  if (!disableScheduler) {
-    void (async () => {
-      try {
-        // Start scheduler first so the interval timer is registered immediately
-        await initPriceScheduler();
-      } catch (error) {
-        console.error("Scheduler init failed:", error);
-      }
-    })();
-  } else {
-    console.log("Scheduler disabled by DISABLE_SCHEDULER=true");
-  }
-
-  if (!disableModelTraining) {
-    void (async () => {
-      try {
-        await initializePricingModel();
-        console.log("\u{1F4B0} Pricing model ready");
-      } catch (error) {
-        console.error("Pricing model init failed:", error);
-      }
-    })();
-  } else {
-    console.log("Model training disabled by DISABLE_MODEL_TRAINING=true");
-  }
+  void (async () => {
+    try {
+      await initializePricingModel();
+      console.log("\u{1F4B0} Pricing model ready");
+    } catch (error) {
+      console.error("Pricing model init failed:", error);
+    }
+  })();
 })();
