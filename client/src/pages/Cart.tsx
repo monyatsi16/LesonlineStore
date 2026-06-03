@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { resolveApiUrl } from "@/lib/api";
 import {
   Trash2, ShieldCheck, ArrowRight, ShoppingCart, Minus, Plus,
   Zap, Lock, ChevronRight, Package, MapPin, Truck, Check
@@ -59,7 +60,7 @@ export default function Cart() {
   const [isOrdering, setIsOrdering] = useState(false);
 
   useEffect(() => {
-    fetch("/api/marketplace")
+    fetch(resolveApiUrl("/api/marketplace"))
       .then(r => r.json())
       .then(setProducts)
       .catch(() => {});
@@ -111,7 +112,7 @@ export default function Cart() {
         country: "Lesotho",
       };
 
-      const res = await fetch("/api/orders/checkout", {
+      const res = await fetch(resolveApiUrl("/api/orders/checkout"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

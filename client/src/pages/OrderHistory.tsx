@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { resolveApiUrl } from "@/lib/api";
 import { Search, RotateCcw, Clock3, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
@@ -61,7 +62,7 @@ export default function OrderHistory() {
     setHistory(null);
 
     try {
-      const res = await fetch(`/api/orders/history?email=${encodeURIComponent(email.trim())}`);
+      const res = await fetch(resolveApiUrl(`/api/orders/history?email=${encodeURIComponent(email.trim())}`));
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Unable to load orders");
       setHistory(data);

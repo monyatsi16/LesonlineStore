@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
         env:
           PUPPETEER_SKIP_DOWNLOAD: true
@@ -28,13 +28,22 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Login to Railway
+      - name: Authenticate Railway
         env:
           RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
         run: |
           railway login --apiKey "$RAILWAY_API_KEY"
 
       - name: Deploy to Railway
+        env:
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT: ${{ secrets.RAILWAY_ENVIRONMENT }}
         run: |
-          # `railway up` will create/update the project tied to this repository
-          railway up --detach
+          if [ -n "$RAILWAY_PROJECT_ID" ]; then
+            railway up --detach --project "$RAILWAY_PROJECT_ID"
+          else
+            railway up --detach
+          fi
+          if [ -n "$RAILWAY_ENVIRONMENT" ]; then
+            echo "Deployed using Railway environment: $RAILWAY_ENVIRONMENT"
+          fi

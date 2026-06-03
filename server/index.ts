@@ -10,129 +10,95 @@ import { ensureLesOnlineBootstrap } from "./bootstrap";
 const app = express();
 const httpServer = createServer(app);
 
-declare module "http" {
-  interface IncomingMessage {
-    rawBody: unknown;
-  }
-}
-
+// Middleware
 app.use(
   express.json({
-    verify: (req, _res, buf) => {
+    verify: (req: any, _res, buf) => {
       req.rawBody = buf;
     },
-  }),
+  })
 );
 
 app.use(express.urlencoded({ extended: false }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
-
-function listenWithPortFallback(startPort: number, maxAttempts = 10): Promise<number> {
-  return new Promise((resolve, reject) => {
-    let attempts = 0;
-    let currentPort = startPort;
-
-    const tryListen = () => {
-      const onError = (error: NodeJS.ErrnoException) => {
-        httpServer.off("listening", onListening);
-
-        if (error.code === "EADDRINUSE" && attempts < maxAttempts - 1) {
-          attempts += 1;
-          currentPort += 1;
-          log(`Port in use, retrying on ${currentPort}`, "server");
-          tryListen();
-          return;
-        }
-
-        reject(error);
-      };
-
-      const onListening = () => {
-        httpServer.off("error", onError);
-        resolve(currentPort);
-      };
-
-      httpServer.once("error", onError);
-      httpServer.once("listening", onListening);
-      const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-      httpServer.listen({ port: currentPort, host });
-    };
-
-    tryListen();
-  });
-}
+// CORS
+const corsOrigins = process.env.CORS_ALLOWED_ORIGINS
+  ? process.env.CORS_ALLOWED_ORIGINS.split(",").map(o => o.trim())
+  : ["*"];
 
 app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin && (corsOrigins.includes("*") || corsOrigins.includes(origin))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  }
+
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+
   next();
 });
 
+export function log(message: string, source = "express") {
+  const time = new Date().toLocaleTimeString();
+  console.log(`${time} [${source}] ${message}`);
+}
+
 (async () => {
-  await registerRoutes(httpServer, app);
-  await ensureLesOnlineBootstrap();
+  try {
+    console.log("🚀 Starting server...");
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // IMPORTANT: START SERVER FIRST (Render requirement)
+    const PORT = Number(process.env.PORT) || 10000;
 
-    console.error("Internal Server Error:", err);
+    httpServer.listen(PORT, "0.0.0.0", () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
 
-    if (res.headersSent) {
-      return next(err);
+    // Register routes (non-blocking)
+    registerRoutes(httpServer, app)
+      .then(() => console.log("✅ Routes registered"))
+      .catch(err => console.error("❌ Routes error:", err));
+
+    // Bootstrap (non-blocking)
+    ensureLesOnlineBootstrap()
+      .then(() => console.log("✅ Bootstrap complete"))
+      .catch(err => console.error("❌ Bootstrap error:", err));
+
+    // Static handling
+    if (process.env.NODE_ENV === "production") {
+      serveStatic(app);
+    } else {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
     }
 
-    return res.status(status).json({ message });
-  });
+    // Scheduler (safe background)
+    const disableScheduler =
+      process.env.DISABLE_SCHEDULER === "true";
 
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  }
+    const disableModelTraining =
+      process.env.DISABLE_MODEL_TRAINING === "true";
 
-  const initialPort = parseInt(process.env.PORT || "5000", 10);
-  const activePort = await listenWithPortFallback(initialPort);
-  console.log(`\n  App is running at: http://localhost:${activePort}\n`);
+    if (!disableScheduler) {
+      initPriceScheduler().catch(err =>
+        console.error("Scheduler error:", err)
+      );
+    } else {
+      console.log("⛔ Scheduler disabled");
+    }
 
-  // Start scheduler and model training depending on environment variables.
-  // In constrained environments (free builders), set `DISABLE_SCHEDULER=true`
-  // and/or `DISABLE_MODEL_TRAINING=true` to avoid heavy background work.
-  const disableScheduler = String(process.env.DISABLE_SCHEDULER || "false").toLowerCase() === "true";
-  const disableModelTraining = String(process.env.DISABLE_MODEL_TRAINING || "false").toLowerCase() === "true";
+    if (!disableModelTraining) {
+      initializePricingModel().catch(err =>
+        console.error("Model error:", err)
+      );
+    } else {
+      console.log("⛔ Model training disabled");
+    }
 
-  if (!disableScheduler) {
-    void (async () => {
-      try {
-        // Start scheduler first so the interval timer is registered immediately
-        await initPriceScheduler();
-      } catch (error) {
-        console.error("Scheduler init failed:", error);
-      }
-    })();
-  } else {
-    console.log("Scheduler disabled by DISABLE_SCHEDULER=true");
-  }
-
-  if (!disableModelTraining) {
-    void (async () => {
-      try {
-        await initializePricingModel();
-        console.log("\u{1F4B0} Pricing model ready");
-      } catch (error) {
-        console.error("Pricing model init failed:", error);
-      }
-    })();
-  } else {
-    console.log("Model training disabled by DISABLE_MODEL_TRAINING=true");
+  } catch (err) {
+    console.error("💥 Fatal startup error:", err);
   }
 })();

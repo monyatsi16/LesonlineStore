@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { addToCart } from "./Cart";
+import { resolveApiUrl } from "@/lib/api";
 import type { Product } from "@shared/schema";
 
 interface MarketplaceProduct extends Product {
@@ -150,7 +151,7 @@ export default function ProductDetails() {
   const { data: internetSearchData, isFetching: isInternetSearching } = useQuery<InternetSearchResult>({
     queryKey: ["/api/marketplace/internet-search", internetSearchQuery],
     queryFn: async () => {
-      const res = await fetch(`/api/marketplace/internet-search?q=${encodeURIComponent(internetSearchQuery)}&limit=12`);
+      const res = await fetch(resolveApiUrl(`/api/marketplace/internet-search?q=${encodeURIComponent(internetSearchQuery)}&limit=12`));
       if (!res.ok) throw new Error("Internet search failed");
       return res.json();
     },

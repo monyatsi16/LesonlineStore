@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { resolveApiUrl } from "./api";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,7 +13,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const res = await fetch(resolveApiUrl(url), {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -34,7 +35,7 @@ export const getQueryFn: <T>(options: {
       throw new Error("Invalid query key: first element must be an endpoint string");
     }
 
-    const res = await fetch(endpoint, {
+    const res = await fetch(resolveApiUrl(endpoint), {
       credentials: "include",
     });
 

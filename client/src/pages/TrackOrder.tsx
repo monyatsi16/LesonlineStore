@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { resolveApiUrl } from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Package, Search, Clock3, CheckCircle2, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -75,7 +76,7 @@ export default function TrackOrder() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/api/orders/track/${id}?email=${encodeURIComponent(email.trim())}`);
+      const res = await fetch(resolveApiUrl(`/api/orders/track/${id}?email=${encodeURIComponent(email.trim())}`));
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || "Unable to track order");
       setResult(data);

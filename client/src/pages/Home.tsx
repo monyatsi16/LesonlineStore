@@ -43,8 +43,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { resolveApiUrl } from "@/lib/api";
 import type { Product } from "@shared/schema";
 import { addToCart } from "./Cart";
+
+type ProductWithRecommendation = Product & {
+  recommendedPrice?: number;
+  recommendedTrend?: string;
+};
 
 type SmartSearchResult = {
   query: string;
@@ -98,7 +104,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 type SortOption = "default" | "price-low" | "price-high" | "popular" | "rating" | "newest";
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product }: { product: ProductWithRecommendation }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const isAdminOrSeller = user?.role === "admin" || user?.role === "seller";
@@ -306,7 +312,7 @@ export default function Home() {
   const { data: smartSearch } = useQuery<SmartSearchResult>({
     queryKey: ["/api/marketplace/smart-search", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch(`/api/marketplace/smart-search?q=${encodeURIComponent(debouncedSearch)}`);
+      const res = await fetch(resolveApiUrl(`/api/marketplace/smart-search?q=${encodeURIComponent(debouncedSearch)}`));
       if (!res.ok) throw new Error("Search failed");
       return res.json();
     },
@@ -316,7 +322,7 @@ export default function Home() {
   const { data: internetSearch } = useQuery<InternetSearchResult>({
     queryKey: ["/api/marketplace/internet-search", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch(`/api/marketplace/internet-search?q=${encodeURIComponent(debouncedSearch)}&limit=16`);
+      const res = await fetch(resolveApiUrl(`/api/marketplace/internet-search?q=${encodeURIComponent(debouncedSearch)}&limit=16`));
       if (!res.ok) throw new Error("Internet search failed");
       return res.json();
     },
